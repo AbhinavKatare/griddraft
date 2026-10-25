@@ -1,0 +1,1454 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "UK Wind Forecast Monitoring",
+    "description": "### UK Wind Forecast Monitoring & Day-Ahead Trading Analytics\n\nProduction REST API for power traders, quantitatively evaluating National Grid ESO / Elexon BMRS WINDFOR generation forecasts against FUELHH metered outturn.\n\n**Key Capabilities:**\n- Point-in-time forecast selection at configurable decision cutoffs (e.g. D-1 09:00)\n- Causal information leakage prevention (publishTime <= cutoff <= startTime)\n- Outturn-normalised accuracy metrics (NMAE by mean actual and max observed actual, sMAPE)\n- Downside shortfall risk analysis and implied backup thermal procurement\n- Lead-time horizon and diurnal hour-of-day error profiles\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/meta": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Get dataset coverage and ingestion metadata",
+        "description": "Returns available date boundaries, cache status, and raw row counts for actuals and forecasts.",
+        "operationId": "get_metadata_api_v1_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/timeseries": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Query aligned actual and forecast time-series with downsampling",
+        "description": "Returns actual wind generation alongside decision-time forecast and latest forecast. Supports downsampling aggregation via ?resolution=30m|1h|3h.",
+        "operationId": "get_timeseries_api_v1_timeseries_get",
+        "parameters": [
+          {
+            "name": "resolution",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(30m|1h|3h)$",
+              "description": "Temporal resolution: '30m' (native), '1h' (hourly average), or '3h' (3-hour average)",
+              "examples": [
+                "30m",
+                "1h",
+                "3h"
+              ],
+              "default": "30m",
+              "title": "Resolution"
+            },
+            "description": "Temporal resolution: '30m' (native), '1h' (hourly average), or '3h' (3-hour average)"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Start delivery date (YYYY-MM-DD) within January 2026",
+              "examples": [
+                "2026-01-01"
+              ],
+              "default": "2026-01-01",
+              "title": "Start Date"
+            },
+            "description": "Start delivery date (YYYY-MM-DD) within January 2026"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "End delivery date (YYYY-MM-DD) within January 2026",
+              "examples": [
+                "2026-01-31"
+              ],
+              "default": "2026-01-31",
+              "title": "End Date"
+            },
+            "description": "End delivery date (YYYY-MM-DD) within January 2026"
+          },
+          {
+            "name": "decision_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format",
+              "examples": [
+                "09:00",
+                "08:30",
+                "11:00"
+              ],
+              "default": "09:00",
+              "title": "Decision Time"
+            },
+            "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeseriesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/forecast-snapshot": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Get day-ahead forecast snapshot for a specific delivery date",
+        "description": "Returns the exact 48 settlement half-hours for a target day as known at the decision cutoff.",
+        "operationId": "get_forecast_snapshot_api_v1_forecast_snapshot_get",
+        "parameters": [
+          {
+            "name": "delivery_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Target delivery date in ISO format (YYYY-MM-DD) inside January 2026",
+              "examples": [
+                "2026-01-15"
+              ],
+              "default": "2026-01-15",
+              "title": "Delivery Date"
+            },
+            "description": "Target delivery date in ISO format (YYYY-MM-DD) inside January 2026"
+          },
+          {
+            "name": "decision_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format",
+              "examples": [
+                "09:00",
+                "08:30",
+                "11:00"
+              ],
+              "default": "09:00",
+              "title": "Decision Time"
+            },
+            "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastSnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Calculate trading summary KPIs and risk percentiles",
+        "description": "Computes MAE, RMSE, bias, shortfall percentiles, and safe percentage metrics.",
+        "operationId": "get_metrics_api_v1_metrics_get",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional start filter (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "Optional start filter (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional end filter (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "Optional end filter (YYYY-MM-DD)"
+          },
+          {
+            "name": "decision_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format",
+              "examples": [
+                "09:00",
+                "08:30",
+                "11:00"
+              ],
+              "default": "09:00",
+              "title": "Decision Time"
+            },
+            "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlyKPIs"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/error-by-horizon": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Get forecast error stratified across lead-time horizon buckets",
+        "description": "Evaluates error metrics across lead time windows (0-6h, 6-12h, ..., 60-66.5h). Operates on ALL pre-delivery revisions by default, or on the D-1 decision snapshot.",
+        "operationId": "get_error_by_horizon_api_v1_error_by_horizon_get",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Data source: 'all' (all pre-delivery revisions) or 'decision' (D-1 decision snapshot)",
+              "examples": [
+                "all",
+                "decision"
+              ],
+              "default": "all",
+              "title": "Source"
+            },
+            "description": "Data source: 'all' (all pre-delivery revisions) or 'decision' (D-1 decision snapshot)"
+          },
+          {
+            "name": "decision_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format",
+              "examples": [
+                "09:00",
+                "08:30",
+                "11:00"
+              ],
+              "default": "09:00",
+              "title": "Decision Time"
+            },
+            "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorByHorizonResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/error-by-hour": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Get diurnal forecast error profile across hours of day (0-23)",
+        "description": "Evaluates mean actual, mean forecast, bias, MAE, and RMSE for each clock hour 0 to 23.",
+        "operationId": "get_error_by_hour_api_v1_error_by_hour_get",
+        "parameters": [
+          {
+            "name": "decision_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format",
+              "examples": [
+                "09:00",
+                "08:30",
+                "11:00"
+              ],
+              "default": "09:00",
+              "title": "Decision Time"
+            },
+            "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorByHourResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/safe-wind": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Calculate 'Safe Wind to Count On' and backup thermal procurement",
+        "description": "Derates day-ahead wind commitments by a historical shortfall quantile (default P90). Provides buffer decomposition (systematic bias vs residual quantile), prior-days vs in-sample toggle, and empirical backtest coverage.",
+        "operationId": "get_safe_wind_api_v1_risk_safe_wind_get",
+        "parameters": [
+          {
+            "name": "quantile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 0.999,
+              "minimum": 0.5,
+              "description": "Target reliability quantile (e.g. 0.90 for P90)",
+              "examples": [
+                0.9,
+                0.95,
+                0.99
+              ],
+              "default": 0.9,
+              "title": "Quantile"
+            },
+            "description": "Target reliability quantile (e.g. 0.90 for P90)"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(in_sample|prior_days)$",
+              "description": "Shortfall history mode: 'in_sample' (full month) or 'prior_days' (only days prior to target)",
+              "examples": [
+                "in_sample",
+                "prior_days"
+              ],
+              "default": "in_sample",
+              "title": "Mode"
+            },
+            "description": "Shortfall history mode: 'in_sample' (full month) or 'prior_days' (only days prior to target)"
+          },
+          {
+            "name": "delivery_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Target delivery date in ISO format (YYYY-MM-DD) inside January 2026",
+              "examples": [
+                "2026-01-15"
+              ],
+              "default": "2026-01-15",
+              "title": "Delivery Date"
+            },
+            "description": "Target delivery date in ISO format (YYYY-MM-DD) inside January 2026"
+          },
+          {
+            "name": "decision_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format",
+              "examples": [
+                "09:00",
+                "08:30",
+                "11:00"
+              ],
+              "default": "09:00",
+              "title": "Decision Time"
+            },
+            "description": "Day-ahead auction decision cutoff time on D-1 in HH:MM format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafeWindSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/diagnostics/metrics": {
+      "get": {
+        "tags": [
+          "V1 Analytics & Monitoring"
+        ],
+        "summary": "Get server request latency and timing telemetry",
+        "description": "Returns request counts, mean, P50, and P95 latency per endpoint tracked in memory.",
+        "operationId": "get_diagnostics_metrics_api_v1_diagnostics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Diagnostics Metrics Api V1 Diagnostics Metrics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Service health check",
+        "description": "Health check returning system status and memory cache readiness.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Service root endpoint",
+        "description": "Service root providing entrypoint links and metadata.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Server timing metrics and telemetry",
+        "description": "Endpoint providing request counts and latency statistics.",
+        "operationId": "timing_metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Timing Metrics Metrics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BacktestResult": {
+        "properties": {
+          "target_coverage_pct": {
+            "type": "number",
+            "title": "Target Coverage Pct",
+            "description": "Nominal confidence quantile percentage (e.g. 90%)"
+          },
+          "empirical_coverage_pct": {
+            "type": "number",
+            "title": "Empirical Coverage Pct",
+            "description": "Observed percentage of intervals where actual >= safe_wind"
+          },
+          "total_evaluated_periods": {
+            "type": "integer",
+            "title": "Total Evaluated Periods",
+            "description": "Number of periods with actuals evaluated"
+          },
+          "breach_count": {
+            "type": "integer",
+            "title": "Breach Count",
+            "description": "Number of intervals where actual fell below safe_wind"
+          },
+          "max_breach_mw": {
+            "type": "number",
+            "title": "Max Breach Mw",
+            "description": "Maximum deficit observed: max(0, safe_wind - actual) in MW"
+          },
+          "mean_breach_mw": {
+            "type": "number",
+            "title": "Mean Breach Mw",
+            "description": "Average deficit during breach intervals in MW"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_coverage_pct",
+          "empirical_coverage_pct",
+          "total_evaluated_periods",
+          "breach_count",
+          "max_breach_mw",
+          "mean_breach_mw"
+        ],
+        "title": "BacktestResult",
+        "description": "Empirical backtest evaluating whether actual outturn covered safe wind commitments."
+      },
+      "BufferDecomposition": {
+        "properties": {
+          "systematic_bias_mw": {
+            "type": "number",
+            "title": "Systematic Bias Mw",
+            "description": "Mean historical shortfall component in MW"
+          },
+          "residual_quantile_mw": {
+            "type": "number",
+            "title": "Residual Quantile Mw",
+            "description": "Residual quantile component above mean bias in MW"
+          },
+          "total_buffer_mw": {
+            "type": "number",
+            "title": "Total Buffer Mw",
+            "description": "Total combined shortfall buffer in MW"
+          }
+        },
+        "type": "object",
+        "required": [
+          "systematic_bias_mw",
+          "residual_quantile_mw",
+          "total_buffer_mw"
+        ],
+        "title": "BufferDecomposition",
+        "description": "Decomposition of the total buffer into systematic bias and stochastic residual."
+      },
+      "ErrorByHorizonResponse": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Revisions source: 'all_pre_delivery_revisions' or 'decision_time_snapshot'"
+          },
+          "total_observations": {
+            "type": "integer",
+            "title": "Total Observations"
+          },
+          "buckets": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Buckets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "total_observations",
+          "buckets"
+        ],
+        "title": "ErrorByHorizonResponse",
+        "description": "Stratified forecast accuracy across lead time horizon buckets."
+      },
+      "ErrorByHourResponse": {
+        "properties": {
+          "hours": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Hours"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hours"
+        ],
+        "title": "ErrorByHourResponse",
+        "description": "Diurnal error profile across hours of the day (0-23)."
+      },
+      "ForecastSnapshotResponse": {
+        "properties": {
+          "delivery_date": {
+            "type": "string",
+            "title": "Delivery Date"
+          },
+          "decision_time_str": {
+            "type": "string",
+            "title": "Decision Time Str"
+          },
+          "cutoff_time": {
+            "type": "string",
+            "title": "Cutoff Time"
+          },
+          "total_periods": {
+            "type": "integer",
+            "title": "Total Periods"
+          },
+          "matched_periods": {
+            "type": "integer",
+            "title": "Matched Periods"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/HalfHourForecastPoint"
+            },
+            "type": "array",
+            "title": "Periods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "delivery_date",
+          "decision_time_str",
+          "cutoff_time",
+          "total_periods",
+          "matched_periods",
+          "periods"
+        ],
+        "title": "ForecastSnapshotResponse",
+        "description": "Point-in-time forecast snapshot for a given delivery day and decision cutoff."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HalfHourForecastPoint": {
+        "properties": {
+          "settlement_date": {
+            "type": "string",
+            "title": "Settlement Date",
+            "description": "Settlement date (YYYY-MM-DD)"
+          },
+          "settlement_period": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Settlement Period",
+            "description": "Settlement period (1-48/50)"
+          },
+          "start_time": {
+            "type": "string",
+            "title": "Start Time",
+            "description": "Half-hour start timestamp ISO-8601 UTC"
+          },
+          "actual_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Mw",
+            "description": "Actual wind generation from FUELHH (MW)"
+          },
+          "forecast_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast Mw",
+            "description": "Latest forecast available at decision time (MW)"
+          },
+          "latest_publish_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Publish Time",
+            "description": "Publish time of the selected forecast"
+          },
+          "lead_time_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Time Hours",
+            "description": "Hours between publish time and delivery start"
+          },
+          "error_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Mw",
+            "description": "Signed error = Forecast - Actual (MW)"
+          },
+          "abs_error_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abs Error Mw",
+            "description": "Absolute error |Forecast - Actual| (MW)"
+          },
+          "shortfall_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Mw",
+            "description": "Shortfall when forecast > actual, causing long day-ahead risk (MW)"
+          },
+          "has_forecast": {
+            "type": "boolean",
+            "title": "Has Forecast",
+            "description": "Whether a forecast was available prior to cutoff",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "settlement_date",
+          "settlement_period",
+          "start_time"
+        ],
+        "title": "HalfHourForecastPoint",
+        "description": "Single half-hourly forecast and actual comparison point."
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Application status",
+            "default": "healthy",
+            "examples": [
+              "healthy"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Application version",
+            "examples": [
+              "1.0.0"
+            ]
+          },
+          "cache_loaded": {
+            "type": "boolean",
+            "title": "Cache Loaded",
+            "description": "Whether Parquet data cache is loaded in memory"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "cache_loaded"
+        ],
+        "title": "HealthResponse",
+        "description": "Health check response model."
+      },
+      "MetaResponse": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "description": "Service name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Service version"
+          },
+          "available_start_date": {
+            "type": "string",
+            "title": "Available Start Date",
+            "description": "Earliest available settlement date (YYYY-MM-DD)"
+          },
+          "available_end_date": {
+            "type": "string",
+            "title": "Available End Date",
+            "description": "Latest available settlement date (YYYY-MM-DD)"
+          },
+          "last_ingestion_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Ingestion Time",
+            "description": "ISO timestamp of last cache update"
+          },
+          "fuelhh_rows": {
+            "type": "integer",
+            "title": "Fuelhh Rows",
+            "description": "Number of metered actual half-hour rows in cache"
+          },
+          "windfor_rows": {
+            "type": "integer",
+            "title": "Windfor Rows",
+            "description": "Number of forecast revision rows in cache"
+          },
+          "decision_time_default": {
+            "type": "string",
+            "title": "Decision Time Default",
+            "description": "Default trading decision cutoff on D-1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "version",
+          "available_start_date",
+          "available_end_date",
+          "fuelhh_rows",
+          "windfor_rows",
+          "decision_time_default"
+        ],
+        "title": "MetaResponse",
+        "description": "Metadata detailing available dataset scope, dates, and cache timestamps."
+      },
+      "MonthlyKPIs": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month",
+            "description": "Scope month (YYYY-MM)"
+          },
+          "decision_time_str": {
+            "type": "string",
+            "title": "Decision Time Str",
+            "description": "Decision time on D-1 (HH:MM GMT)"
+          },
+          "total_possible_half_hours": {
+            "type": "integer",
+            "title": "Total Possible Half Hours"
+          },
+          "matched_half_hours": {
+            "type": "integer",
+            "title": "Matched Half Hours"
+          },
+          "data_coverage_pct": {
+            "type": "number",
+            "title": "Data Coverage Pct"
+          },
+          "mae_mw": {
+            "type": "number",
+            "title": "Mae Mw"
+          },
+          "rmse_mw": {
+            "type": "number",
+            "title": "Rmse Mw"
+          },
+          "mean_bias_mw": {
+            "type": "number",
+            "title": "Mean Bias Mw"
+          },
+          "bias_direction": {
+            "type": "string",
+            "title": "Bias Direction",
+            "description": "'OVER_FORECAST' (long risk) or 'UNDER_FORECAST' (short risk)"
+          },
+          "mae_pct_of_mean_gen": {
+            "type": "number",
+            "title": "Mae Pct Of Mean Gen"
+          },
+          "mae_pct_of_max_gen": {
+            "type": "number",
+            "title": "Mae Pct Of Max Gen"
+          },
+          "mae_pct_of_capacity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mae Pct Of Capacity"
+          },
+          "mean_actual_mw": {
+            "type": "number",
+            "title": "Mean Actual Mw"
+          },
+          "mean_forecast_mw": {
+            "type": "number",
+            "title": "Mean Forecast Mw"
+          },
+          "max_actual_mw": {
+            "type": "number",
+            "title": "Max Actual Mw"
+          },
+          "max_forecast_mw": {
+            "type": "number",
+            "title": "Max Forecast Mw"
+          },
+          "abs_error_percentiles": {
+            "$ref": "#/components/schemas/Percentiles"
+          },
+          "shortfall_percentiles": {
+            "$ref": "#/components/schemas/Percentiles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "decision_time_str",
+          "total_possible_half_hours",
+          "matched_half_hours",
+          "data_coverage_pct",
+          "mae_mw",
+          "rmse_mw",
+          "mean_bias_mw",
+          "bias_direction",
+          "mae_pct_of_mean_gen",
+          "mae_pct_of_max_gen",
+          "mean_actual_mw",
+          "mean_forecast_mw",
+          "max_actual_mw",
+          "max_forecast_mw",
+          "abs_error_percentiles",
+          "shortfall_percentiles"
+        ],
+        "title": "MonthlyKPIs",
+        "description": "High-level summary metrics for the target scope."
+      },
+      "Percentiles": {
+        "properties": {
+          "p50": {
+            "type": "number",
+            "title": "P50",
+            "description": "50th percentile (Median)"
+          },
+          "p90": {
+            "type": "number",
+            "title": "P90",
+            "description": "90th percentile"
+          },
+          "p99": {
+            "type": "number",
+            "title": "P99",
+            "description": "99th percentile"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p50",
+          "p90",
+          "p99"
+        ],
+        "title": "Percentiles",
+        "description": "Percentile distribution metrics."
+      },
+      "SafeWindPeriod": {
+        "properties": {
+          "start_time": {
+            "type": "string",
+            "title": "Start Time",
+            "description": "Target delivery start time in UTC (ISO 8601)"
+          },
+          "settlement_period": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Period",
+            "description": "GB settlement period (1-48)"
+          },
+          "forecast_mw": {
+            "type": "number",
+            "title": "Forecast Mw",
+            "description": "Nominal point forecast in MW"
+          },
+          "shortfall_buffer_mw": {
+            "type": "number",
+            "title": "Shortfall Buffer Mw",
+            "description": "Historical shortfall quantile buffer in MW"
+          },
+          "safe_wind_mw": {
+            "type": "number",
+            "title": "Safe Wind Mw",
+            "description": "Floored safe wind volume: max(0, forecast - buffer) in MW"
+          },
+          "thermal_procurement_mw": {
+            "type": "number",
+            "title": "Thermal Procurement Mw",
+            "description": "Backup capacity required: min(forecast, buffer) in MW"
+          },
+          "actual_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Mw",
+            "description": "Actual outturn if available in MW"
+          },
+          "is_breached": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Breached",
+            "description": "Whether actual < safe_wind (breach)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_time",
+          "forecast_mw",
+          "shortfall_buffer_mw",
+          "safe_wind_mw",
+          "thermal_procurement_mw"
+        ],
+        "title": "SafeWindPeriod",
+        "description": "Safe wind commitment and backup procurement for a single settlement period."
+      },
+      "SafeWindSummary": {
+        "properties": {
+          "quantile": {
+            "type": "number",
+            "maximum": 0.999,
+            "minimum": 0.5,
+            "title": "Quantile",
+            "description": "Target reliability quantile (e.g. 0.90 for P90)"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "Evaluation mode: 'in_sample' or 'prior_days'"
+          },
+          "shortfall_quantile_mw": {
+            "type": "number",
+            "title": "Shortfall Quantile Mw",
+            "description": "Evaluated total shortfall buffer in MW"
+          },
+          "total_forecast_mwh": {
+            "type": "number",
+            "title": "Total Forecast Mwh",
+            "description": "Total forecasted energy across periods in MWh"
+          },
+          "total_safe_wind_mwh": {
+            "type": "number",
+            "title": "Total Safe Wind Mwh",
+            "description": "Total derated safe wind energy in MWh"
+          },
+          "total_thermal_procurement_mwh": {
+            "type": "number",
+            "title": "Total Thermal Procurement Mwh",
+            "description": "Total backup thermal energy required in MWh"
+          },
+          "hedge_ratio_pct": {
+            "type": "number",
+            "title": "Hedge Ratio Pct",
+            "description": "Ratio of safe wind to nominal forecast (0 - 100%)"
+          },
+          "decomposition": {
+            "$ref": "#/components/schemas/BufferDecomposition"
+          },
+          "backtest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BacktestResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/SafeWindPeriod"
+            },
+            "type": "array",
+            "title": "Periods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantile",
+          "mode",
+          "shortfall_quantile_mw",
+          "total_forecast_mwh",
+          "total_safe_wind_mwh",
+          "total_thermal_procurement_mwh",
+          "hedge_ratio_pct",
+          "decomposition",
+          "periods"
+        ],
+        "title": "SafeWindSummary",
+        "description": "Aggregated safe wind profile, buffer decomposition, and backtest results."
+      },
+      "TimeseriesPoint": {
+        "properties": {
+          "start_time": {
+            "type": "string",
+            "title": "Start Time",
+            "description": "Interval start timestamp in UTC (ISO 8601)"
+          },
+          "settlement_date": {
+            "type": "string",
+            "title": "Settlement Date",
+            "description": "GB settlement date (YYYY-MM-DD)"
+          },
+          "settlement_period": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Settlement Period",
+            "description": "Settlement period (1-48)"
+          },
+          "actual_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Mw",
+            "description": "Outturn metered wind generation (FUELHH) in MW"
+          },
+          "decision_forecast_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Forecast Mw",
+            "description": "Latest forecast published prior to cutoff in MW"
+          },
+          "latest_forecast_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Forecast Mw",
+            "description": "Latest forecast published prior to delivery start in MW"
+          },
+          "error_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Mw",
+            "description": "Decision error = forecast - actual in MW"
+          },
+          "abs_error_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abs Error Mw",
+            "description": "Absolute error in MW"
+          },
+          "shortfall_mw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Mw",
+            "description": "Downside shortfall = max(0, forecast - actual) in MW"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_time",
+          "settlement_date",
+          "settlement_period"
+        ],
+        "title": "TimeseriesPoint",
+        "description": "A single half-hourly aligned observation containing actuals and forecasts."
+      },
+      "TimeseriesResponse": {
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "title": "End Date"
+          },
+          "decision_time": {
+            "type": "string",
+            "title": "Decision Time"
+          },
+          "total_points": {
+            "type": "integer",
+            "title": "Total Points"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TimeseriesPoint"
+            },
+            "type": "array",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_date",
+          "end_date",
+          "decision_time",
+          "total_points",
+          "data"
+        ],
+        "title": "TimeseriesResponse",
+        "description": "Time-series query response with aligned actuals and forecasts."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
