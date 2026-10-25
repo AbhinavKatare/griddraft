@@ -172,7 +172,7 @@ export function DecisionView({ state }: DecisionViewProps) {
                 At the {state.decisionTime} UTC decision cutoff on D-1, this period was committed based on WINDFOR.
                 Derating by the {state.safeWindMode === 'prior_days' ? 'prior-days' : 'in-sample'} buffer of{' '}
                 {safeWindData?.shortfall_quantile_mw ? formatMW(safeWindData.shortfall_quantile_mw) : '—'} ensures that thermal replacement
-                reserves can be secured before balancing gate closure.
+                reserves can be secured before delivery.
               </p>
             </div>
           </div>

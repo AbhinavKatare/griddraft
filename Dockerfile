@@ -58,7 +58,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8000 \
     STATIC_DIR=/app/static \
-    CACHE_DIR=/app/data/cache
+    CACHE_DIR=/app/data/cache \
+    WIND_APP_CACHE_DIR=/app/data/cache
 
 # Enforce non-root ownership
 RUN chown -R appuser:appgroup /app

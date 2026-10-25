@@ -138,22 +138,33 @@ export const mockSafeWind = {
 };
 
 export const mockMonthlyKPIs = {
+  month: '2026-01',
+  decision_time_str: '09:00',
   decision_time: '09:00',
+  total_possible_half_hours: 1488,
   total_half_hours: 1488,
   matched_half_hours: 1488,
-  data_coverage_pct: 1.0,
-  mean_forecast_mw: 13432.8,
-  mean_actual_mw: 11580.9,
-  mean_bias_mw: 1851.9,
+  data_coverage_pct: 100.0,
   mae_mw: 2145.2,
-  rmse_mw: 2683.4,
-  mae_pct_of_mean_gen: 0.185,
-  mae_pct_of_max_gen: 0.110,
+  rmse_mw: 2615.8,
+  mean_bias_mw: 1851.9,
+  bias_direction: 'OVER_FORECAST',
+  mae_pct_of_mean_gen: 18.52,
+  mae_pct_of_max_gen: 12.05,
+  mean_actual_mw: 11580.7,
+  mean_forecast_mw: 13432.6,
+  max_actual_mw: 17805.0,
+  max_forecast_mw: 21064.0,
+  abs_error_percentiles: {
+    p50: 1795.5,
+    p90: 4274.9,
+    p99: 6359.9,
+  },
   shortfall_percentiles: {
-    p50: 1680.0,
-    p90: 3728.0,
-    p95: 4310.0,
-    p99: 5490.0,
+    p50: 1703.0,
+    p90: 4274.9,
+    p95: 4982.0,
+    p99: 6359.9,
   },
 };
 
@@ -186,47 +197,47 @@ export const mockErrorByHour = {
 };
 
 export const handlers = [
-  http.get('/api/v1/meta', () => {
+  http.get('*/api/v1/meta', () => {
     return HttpResponse.json(mockMeta);
   }),
 
-  http.get('/api/v1/timeseries', () => {
+  http.get('*/api/v1/timeseries', () => {
     return HttpResponse.json(mockTimeseries);
   }),
 
-  http.get('/api/v1/forecast-snapshot', () => {
+  http.get('*/api/v1/forecast-snapshot', () => {
     return HttpResponse.json(mockSnapshot);
   }),
 
-  http.get('/api/v1/forecast/snapshot', () => {
+  http.get('*/api/v1/forecast/snapshot', () => {
     return HttpResponse.json(mockSnapshot);
   }),
 
-  http.get('/api/v1/risk/safe-wind', () => {
+  http.get('*/api/v1/risk/safe-wind', () => {
     return HttpResponse.json(mockSafeWind);
   }),
 
-  http.get('/api/v1/metrics', () => {
+  http.get('*/api/v1/metrics', () => {
     return HttpResponse.json(mockMonthlyKPIs);
   }),
 
-  http.get('/api/v1/error-by-horizon', () => {
+  http.get('*/api/v1/error-by-horizon', () => {
     return HttpResponse.json(mockErrorByHorizon);
   }),
 
-  http.get('/api/v1/metrics/error-by-horizon', () => {
+  http.get('*/api/v1/metrics/error-by-horizon', () => {
     return HttpResponse.json(mockErrorByHorizon);
   }),
 
-  http.get('/api/v1/error-by-hour', () => {
+  http.get('*/api/v1/error-by-hour', () => {
     return HttpResponse.json(mockErrorByHour);
   }),
 
-  http.get('/api/v1/metrics/error-by-hour', () => {
+  http.get('*/api/v1/metrics/error-by-hour', () => {
     return HttpResponse.json(mockErrorByHour);
   }),
 
-  http.get('/health', () => {
+  http.get('*/health', () => {
     return HttpResponse.json({ status: 'healthy', version: '1.0.0', cache_loaded: true });
   }),
 ];

@@ -1,0 +1,20 @@
+# Core Code Owners & Quality Gatekeepers
+# Each pull request modifying these critical paths requires explicit review.
+
+# Analytics, Quantitative Logic & Invariants
+/backend/app/analytics/           @quant-lead @backend-core
+/backend/tests/                   @quant-lead @backend-core
+
+# API Routers, Schemas & Middleware
+/backend/app/routers/             @backend-core
+/backend/app/models/              @backend-core
+
+# Frontend UI, Design System & Recharts Visualizations
+/frontend/src/features/           @frontend-core @ui-designer
+/frontend/src/components/         @frontend-core
+/frontend/src/test/               @frontend-core
+
+# Infrastructure, Docker & CI/CD Pipelines
+/.github/workflows/               @devops-lead
+/Dockerfile                       @devops-lead
+/docker-compose.yml               @devops-lead

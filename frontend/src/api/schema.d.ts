@@ -503,8 +503,6 @@ export interface components {
             mae_pct_of_mean_gen: number;
             /** Mae Pct Of Max Gen */
             mae_pct_of_max_gen: number;
-            /** Mae Pct Of Capacity */
-            mae_pct_of_capacity?: number | null;
             /** Mean Actual Mw */
             mean_actual_mw: number;
             /** Mean Forecast Mw */

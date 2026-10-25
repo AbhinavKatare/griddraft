@@ -136,6 +136,7 @@ def calculate_safe_wind_profile(
     historical_shortfalls: Optional[Sequence[float] | pd.Series | np.ndarray] = None,
     mode: str = "in_sample",
     full_history_df: Optional[pd.DataFrame] = None,
+    prior_cutoff_offset_days: int = 1,
 ) -> SafeWindSummary:
     """
     Compute period-by-period safe wind generation, buffer decomposition, and backtest.
@@ -146,6 +147,7 @@ def calculate_safe_wind_profile(
     - historical_shortfalls: Optional external sample of shortfall = max(0, forecast - actual).
     - mode: 'in_sample' (uses full sample distribution) or 'prior_days' (uses only days strictly prior to target date).
     - full_history_df: Optional complete historical aligned DataFrame containing actuals and forecasts for prior_days mode.
+    - prior_cutoff_offset_days: Number of days prior to target date for training cutoff (1 for < D, 2 for <= D-2).
     """
     if target_forecasts_df.empty:
         empty_decomp = BufferDecomposition(systematic_bias_mw=0.0, residual_quantile_mw=0.0, total_buffer_mw=0.0)
@@ -165,7 +167,8 @@ def calculate_safe_wind_profile(
     # Resolve shortfalls based on mode
     if mode == "prior_days" and full_history_df is not None and not full_history_df.empty:
         target_date = str(target_forecasts_df.get("settlementDate", pd.Series([""])).iloc[0])
-        prior = full_history_df[full_history_df["settlementDate"] < target_date].dropna(
+        cutoff_date = (pd.to_datetime(target_date) - pd.Timedelta(days=prior_cutoff_offset_days)).strftime("%Y-%m-%d")
+        prior = full_history_df[full_history_df["settlementDate"] <= cutoff_date].dropna(
             subset=["actual_mw", "forecast_mw"]
         )
         if len(prior) >= 48:
@@ -174,6 +177,11 @@ def calculate_safe_wind_profile(
         elif historical_shortfalls is not None and len(historical_shortfalls) > 0:
             sf_array = np.asarray(historical_shortfalls, dtype="float64")
             sf_clean = sf_array[~np.isnan(sf_array)]
+        elif "actual_mw" in target_forecasts_df.columns and "forecast_mw" in target_forecasts_df.columns:
+            # Fallback for D=1 or D=2 when <48 prior periods exist
+            valid = target_forecasts_df.dropna(subset=["actual_mw", "forecast_mw"])
+            err = valid["forecast_mw"].to_numpy() - valid["actual_mw"].to_numpy()
+            sf_clean = np.maximum(0.0, err)
         else:
             sf_clean = np.array([0.0])
     elif historical_shortfalls is not None and len(historical_shortfalls) > 0:
@@ -193,7 +201,7 @@ def calculate_safe_wind_profile(
     decomp = decompose_shortfall_buffer(sf_clean, quantile=quantile)
     q_val = decomp.total_buffer_mw
 
-    df = target_forecasts_df.copy()
+    df = target_forecasts_df.reset_index(drop=True)
     if "forecast_mw" not in df.columns:
         raise ValueError("target_forecasts_df must contain 'forecast_mw' column.")
 

@@ -70,11 +70,11 @@ export const KPICards = React.memo(function KPICards({
         deltaType={showComparison ? 'positive' : 'neutral'}
         subtitle={
           showComparison && latestMetrics?.mae_mw !== undefined
-            ? `Latest at Gate-Closure: ${formatMW(latestMetrics.mae_mw, 1)}`
+            ? `Latest Pre-Delivery: ${formatMW(latestMetrics.mae_mw, 1)}`
             : `Norm by mean outturn (${metrics?.mean_actual_mw ? formatMW(metrics.mean_actual_mw, 0) : '—'})`
         }
         accentColor="var(--color-forecast)"
-        tooltip="TRADER CONTEXT: The average volumetric sizing error per half-hour. If you hedge 100% of the forecast in the day-ahead auction, this is your expected unhedged position volume requiring prompt cashout settlement at imbalance prices."
+        tooltip="TRADER CONTEXT: The average volumetric sizing error per half-hour. If you hedge 100% of the forecast in the day-ahead auction, this is your expected unhedged position volume requiring prompt settlement at system imbalance prices."
       />
 
       {/* 2. RMSE */}
@@ -86,18 +86,18 @@ export const KPICards = React.memo(function KPICards({
         deltaText={
           showComparison && rmseDelta !== undefined
             ? `-${formatMW(rmseDelta, 1, false)} MW Volatility Drop`
-            : metrics
-              ? `${formatPercent(metrics.mae_pct_of_max_gen)} of Peak`
+            : metrics && metrics.max_actual_mw
+              ? `${formatPercent((metrics.rmse_mw / metrics.max_actual_mw) * 100)} of Peak`
               : undefined
         }
         deltaType={showComparison ? 'positive' : 'neutral'}
         subtitle={
           showComparison && latestMetrics?.rmse_mw !== undefined
-            ? `Latest at Gate-Closure: ${formatMW(latestMetrics.rmse_mw, 1)}`
+            ? `Latest Pre-Delivery: ${formatMW(latestMetrics.rmse_mw, 1)}`
             : 'Heavily penalises large forecast swings'
         }
         accentColor="var(--color-shortfall)"
-        tooltip="TRADER CONTEXT: Quadratic penalty on large errors. Extreme volumetric misses (e.g. rapid frontal passage timing errors) trigger severe system imbalance cashout penalties. Lower RMSE means fewer catastrophic tail misses."
+        tooltip="TRADER CONTEXT: Quadratic penalty on large errors. Extreme volumetric misses (e.g. rapid weather front timing differences) trigger severe system imbalance settlement costs. Lower RMSE means fewer catastrophic tail misses."
       />
 
       {/* 3. Bias */}
@@ -116,11 +116,11 @@ export const KPICards = React.memo(function KPICards({
         deltaType="warning"
         subtitle={
           showComparison && latestMetrics?.bias_mw !== undefined
-            ? `Latest Gate-Closure Bias: +${formatMW(latestMetrics.bias_mw, 1)}`
+            ? `Latest Pre-Delivery Bias: +${formatMW(latestMetrics.bias_mw, 1)}`
             : 'Forecast systematically > Actual'
         }
         accentColor="var(--color-forecast)"
-        tooltip="TRADER CONTEXT: Average directional miss (Forecast minus Actual). WINDFOR's +1,852 MW positive bias means you consistently over-sell day-ahead and are systematically forced to buy back power at cashout prices in the balancing mechanism."
+        tooltip="TRADER CONTEXT: Average directional miss (Forecast minus Actual). WINDFOR's +1,852 MW positive bias means you consistently over-sell day-ahead and are systematically forced to buy back replacement energy in the balancing mechanism."
       />
 
       {/* 4. P90 Shortfall / Error */}
@@ -137,11 +137,11 @@ export const KPICards = React.memo(function KPICards({
         deltaType={showComparison ? 'positive' : 'warning'}
         subtitle={
           showComparison && latestMetrics?.p90_shortfall_mw !== undefined
-            ? `Latest Gate-Closure P90: ${formatMW(latestMetrics.p90_shortfall_mw, 0)}`
+            ? `Latest Pre-Delivery P90: ${formatMW(latestMetrics.p90_shortfall_mw, 0)}`
             : 'Max generation deficit in 90% of periods'
         }
         accentColor="var(--color-safe-wind)"
-        tooltip="TRADER CONTEXT: 90th percentile of positive deficits max(0, Forecast - Actual). In 90% of evaluated settlement periods, actual generation was within this deficit from the forecast. This defines your required firm backup thermal procurement."
+        tooltip="TRADER CONTEXT: 90th percentile of positive deficits max(0, Forecast - Actual). In 90% of evaluated settlement periods, actual generation was within this deficit from the forecast. This defines your required replacement reserve procurement."
       />
 
       {/* 5. Data Coverage */}

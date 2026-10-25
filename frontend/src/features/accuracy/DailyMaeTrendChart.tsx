@@ -77,7 +77,7 @@ export const DailyMaeTrendChart = React.memo(function DailyMaeTrendChart({
             Daily Forecast Accuracy & Information Leakage Trend (January 2026)
           </h3>
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            Daily MAE evolution across the month. {showComparison ? 'Comparing D-1 decision MAE against gate-closure latest MAE to reveal information leakage.' : 'Click any date to inspect in Decision View.'}
+            Daily MAE evolution across the month. {showComparison ? 'Comparing D-1 decision MAE against latest pre-delivery MAE to reveal information leakage.' : 'Click any date to inspect in Decision View.'}
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export const DailyMaeTrendChart = React.memo(function DailyMaeTrendChart({
               }}
             >
               <span style={{ width: '12px', height: '0px', borderTop: '2px dashed var(--color-latest)' }} />
-              <span style={{ fontWeight: 600, color: 'var(--color-latest)' }}>Latest Gate-Closure MAE</span>
+              <span style={{ fontWeight: 600, color: 'var(--color-latest)' }}>Latest Pre-Delivery MAE</span>
             </button>
           )}
 
@@ -229,12 +229,12 @@ export const DailyMaeTrendChart = React.memo(function DailyMaeTrendChart({
               />
             )}
 
-            {/* Latest Gate-Closure MAE Line (Comparison Mode) */}
+            {/* Latest Pre-Delivery MAE Line (Comparison Mode) */}
             {showComparison && visibleSeries.latestMae && (
               <Line
                 type="monotone"
                 dataKey="latest_mae_mw"
-                name="Latest Gate-Closure MAE (MW)"
+                name="Latest Pre-Delivery MAE (MW)"
                 stroke="var(--color-latest)"
                 strokeWidth={2}
                 strokeDasharray="4 4"

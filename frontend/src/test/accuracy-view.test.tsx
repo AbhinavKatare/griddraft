@@ -46,7 +46,29 @@ describe('AccuracyView Component', () => {
 
     // Forecast Baseline comparison toggle
     expect(screen.getByText(/Forecast Baseline:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Compare with Gate-Closure Latest/i)).toBeInTheDocument();
+    expect(screen.getByText(/Compare with Latest Pre-Delivery/i)).toBeInTheDocument();
+  });
+
+  it('enforces exact numerical equality between KPI cards and /api/v1/metrics values', async () => {
+    renderWithClient(<AccuracyView state={mockState} onSelectDate={() => {}} />);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('2,145.2')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    // 1. MAE exact value (2,145.2 MW)
+    expect(screen.getByText('2,145.2')).toBeInTheDocument();
+    // 2. RMSE exact value (2,615.8 MW)
+    expect(screen.getByText('2,615.8')).toBeInTheDocument();
+    // 3. Systematic Bias exact value (+1,851.9 MW)
+    expect(screen.getByText('+1,851.9')).toBeInTheDocument();
+    // 4. P90 Shortfall Buffer exact value (4,275 MW rounded from 4,274.9)
+    expect(screen.getByText('4,275')).toBeInTheDocument();
+    // 5. Matched half-hours count (1488)
+    expect(screen.getByText('1488')).toBeInTheDocument();
   });
 
   it('toggles baseline comparison mode to reveal leakage difference', async () => {
@@ -56,8 +78,8 @@ describe('AccuracyView Component', () => {
     const decisionOnlyBtn = screen.getByText(/D-1 09:00 Decision Cutoff Only/i);
     fireEvent.click(decisionOnlyBtn);
 
-    // Toggle back to "Compare with Gate-Closure Latest"
-    const compareBtn = screen.getByText(/Compare with Gate-Closure Latest/i);
+    // Toggle back to "Compare with Latest Pre-Delivery"
+    const compareBtn = screen.getByText(/Compare with Latest Pre-Delivery/i);
     fireEvent.click(compareBtn);
 
     expect(screen.getByText(/Leakage Delta/i)).toBeInTheDocument();
@@ -77,5 +99,17 @@ describe('AccuracyView Component', () => {
     expect(
       screen.getByText(/Daily Forecast Accuracy & Information Leakage Trend/i)
     ).toBeInTheDocument();
+  });
+
+  it('displays the exact RMSE badge value (14.7% of Peak)', async () => {
+    renderWithClient(<AccuracyView state={mockState} onSelectDate={() => {}} />);
+
+    // Switch to Decision Cutoff Only so non-comparison delta badges render
+    const decisionOnlyBtn = screen.getByText(/D-1 09:00 Decision Cutoff Only/i);
+    fireEvent.click(decisionOnlyBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('14.7% of Peak')).toBeInTheDocument();
+    });
   });
 });

@@ -420,7 +420,6 @@ def calculate_monthly_kpis(
             bias_direction="BALANCED",
             mae_pct_of_mean_gen=0.0,
             mae_pct_of_max_gen=0.0,
-            mae_pct_of_capacity=0.0,
             mean_actual_mw=0.0,
             mean_forecast_mw=0.0,
             max_actual_mw=0.0,
@@ -447,7 +446,6 @@ def calculate_monthly_kpis(
             bias_direction="BALANCED",
             mae_pct_of_mean_gen=0.0,
             mae_pct_of_max_gen=0.0,
-            mae_pct_of_capacity=0.0,
             mean_actual_mw=0.0,
             mean_forecast_mw=0.0,
             max_actual_mw=0.0,
@@ -498,7 +496,6 @@ def calculate_monthly_kpis(
         bias_direction=direction,
         mae_pct_of_mean_gen=pct_mean_gen,
         mae_pct_of_max_gen=pct_max_gen,
-        mae_pct_of_capacity=pct_max_gen,
         mean_actual_mw=round(mean_actual, 1),
         mean_forecast_mw=round(mean_forecast, 1),
         max_actual_mw=round(max_actual, 1),
@@ -694,3 +691,65 @@ def calculate_error_distribution(
         )
 
     return buckets
+
+
+def compute_lag_analysis(
+    df: pd.DataFrame,
+    max_lags: int = 6,
+    step_hours: float = 1.0,
+) -> List[Dict[str, Any]]:
+    """Evaluate temporal alignment by shifting forecast relative to actuals across [-max_lags, +max_lags].
+
+    Guarantees:
+    - At lag_hours == 0.0, mae_mw and rmse_mw match the unshifted primary KPI exactly.
+    """
+    if df.empty or "forecast_mw" not in df.columns or "actual_mw" not in df.columns:
+        return []
+
+    valid = df.dropna(subset=["forecast_mw", "actual_mw"]).sort_values("startTime").copy()
+    if valid.empty:
+        return []
+
+    results: List[Dict[str, Any]] = []
+
+    # In half-hourly data, 1 hour step = 2 intervals; in hourly data, 1 hour step = 1 interval
+    time_diffs = valid["startTime"].diff().dropna()
+    median_diff_min = time_diffs.dt.total_seconds().median() / 60.0 if not time_diffs.empty else 30.0
+    intervals_per_hour = int(round(60.0 / median_diff_min)) if median_diff_min > 0 else 2
+
+    # Baseline unshifted values (lag == 0)
+    base_err = valid["forecast_mw"] - valid["actual_mw"]
+    base_mae = round(float(base_err.abs().mean()), 1)
+    base_rmse = round(float(np.sqrt((base_err ** 2).mean())), 1)
+    base_bias = round(float(base_err.mean()), 1)
+
+    for lag in range(-max_lags, max_lags + 1):
+        shift_intervals = lag * intervals_per_hour
+        lag_hours = float(lag * step_hours)
+
+        if shift_intervals == 0:
+            results.append({
+                "lag_hours": 0.0,
+                "mae_mw": base_mae,
+                "rmse_mw": base_rmse,
+                "mean_bias_mw": base_bias,
+                "sample_count": len(valid),
+            })
+        else:
+            shifted_fc = valid["forecast_mw"].shift(shift_intervals)
+            mask = shifted_fc.notna() & valid["actual_mw"].notna()
+            if mask.sum() > 0:
+                err = shifted_fc[mask] - valid["actual_mw"][mask]
+                mae = round(float(err.abs().mean()), 1)
+                rmse = round(float(np.sqrt((err ** 2).mean())), 1)
+                bias = round(float(err.mean()), 1)
+                results.append({
+                    "lag_hours": lag_hours,
+                    "mae_mw": mae,
+                    "rmse_mw": rmse,
+                    "mean_bias_mw": bias,
+                    "sample_count": int(mask.sum()),
+                })
+
+    return results
+

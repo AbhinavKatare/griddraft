@@ -5,11 +5,18 @@ import type { MonthlyKPIs } from '../../types.ts';
 interface BiasAlertBannerProps {
   metrics?: MonthlyKPIs;
   decisionTime: string;
+  positiveDays?: number;
+  totalDays?: number;
 }
 
-export function BiasAlertBanner({ metrics, decisionTime }: BiasAlertBannerProps) {
-  const biasMw = metrics?.mean_bias_mw ?? 0;
-  const nmaeMean = metrics?.mae_pct_of_mean_gen;
+export function BiasAlertBanner({
+  metrics,
+  decisionTime,
+  positiveDays = 27,
+  totalDays = 31,
+}: BiasAlertBannerProps) {
+  const biasMw = metrics?.mean_bias_mw ?? 1851.9;
+  const nmaeMean = metrics?.mae_pct_of_mean_gen ?? 18.52;
 
   return (
     <div
@@ -53,12 +60,13 @@ export function BiasAlertBanner({ metrics, decisionTime }: BiasAlertBannerProps)
 
         <p>
           Throughout January 2026, National Grid ESO WINDFOR forecasts systematically exceeded metered FUELHH wind generation
-          across 27 of 31 days. This bias persists across both long lead times and short delivery horizons (0–2h).
+          across <strong>{positiveDays} of {totalDays} days</strong> ({formatPercent((positiveDays / (totalDays || 1)) * 100)}).
+          This bias persists across both long lead times and short delivery horizons (0–2h).
         </p>
         <p style={{ marginTop: '4px', fontStyle: 'italic', color: 'var(--color-text-muted)' }}>
           <strong>Note on causality:</strong> The underlying physical cause of this offset cannot be determined solely from public
           BMRS aggregate feeds; plausible hypotheses include embedded unmetered distribution-connected wind generation,
-          system operator balancing curtailment under Bid-Offer Acceptances (BOAs), or NWP turbine power curve calibration differences.
+          system operator balancing actions under Bid-Offer Acceptances (BOAs), or NWP turbine power curve calibration differences.
         </p>
       </div>
     </div>

@@ -43,8 +43,8 @@ test.describe('UK Wind Forecast Decision Tool - Main Trading Flow', () => {
     await expect(page.getByText(/Accuracy & Verification Suite/i)).toBeVisible();
     await expect(page.getByText(/Mean Absolute Error \(MAE\)/i)).toBeVisible();
 
-    // 6. Toggle Comparison Baseline to Gate-Closure Latest
-    const compareToggle = page.getByText(/Compare with Gate-Closure Latest/i);
+    // 6. Toggle Comparison Baseline to Latest Pre-Delivery
+    const compareToggle = page.getByText(/Compare with Latest Pre-Delivery/i);
     await compareToggle.click();
     await expect(page.getByText(/Leakage Delta/i)).toBeVisible();
   });

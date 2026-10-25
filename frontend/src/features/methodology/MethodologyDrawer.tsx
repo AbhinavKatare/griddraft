@@ -25,7 +25,7 @@ export function MethodologyDrawer({ isOpen, onClose }: MethodologyDrawerProps) {
           <p>
             Power traders submitting buy/sell orders into the EPEX SPOT or Nord Pool UK day-ahead hourly auction (closing at 11:00 UTC on D-1)
             rely on National Grid ESO wind forecasts published via Elexon BMRS. Over-forecasting wind generation leaves traders short,
-            forcing expensive imbalance cashout settlement or last-minute intraday replacement.
+            forcing expensive imbalance price settlement or last-minute intraday replacement.
           </p>
         </div>
 

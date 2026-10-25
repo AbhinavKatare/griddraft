@@ -1035,17 +1035,6 @@
             "type": "number",
             "title": "Mae Pct Of Max Gen"
           },
-          "mae_pct_of_capacity": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mae Pct Of Capacity"
-          },
           "mean_actual_mw": {
             "type": "number",
             "title": "Mean Actual Mw"

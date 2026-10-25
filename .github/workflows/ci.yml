@@ -41,6 +41,12 @@ jobs:
           cd backend
           python -m pytest tests/ -v --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml
 
+      - name: Verify Canonical Numbers Quality Gate
+        run: make verify-numbers      # numbers must reconcile
+
+      - name: Backend Contract Test Quality Gate
+        run: make contract-test       # pinned figures must match
+
       - name: Upload Test Coverage Artifact
         uses: actions/upload-artifact@v4
         with:

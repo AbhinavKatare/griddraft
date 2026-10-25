@@ -103,7 +103,7 @@ export const ErrorHistogram = React.memo(function ErrorHistogram({
           </h3>
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
             Distribution of signed errors (Forecast - Actual). Note the pronounced right skew towards positive over-forecasting.
-            {showComparison && ' Comparing D-1 Decision distribution against Gate-Closure distribution.'}
+            {showComparison && ' Comparing D-1 Decision distribution against Latest Pre-Delivery distribution.'}
           </p>
         </div>
 
@@ -135,7 +135,7 @@ export const ErrorHistogram = React.memo(function ErrorHistogram({
                 cursor: 'pointer',
               }}
             >
-              <span style={{ color: 'var(--color-latest)', fontWeight: 600 }}>Gate-Closure Latest</span>
+              <span style={{ color: 'var(--color-latest)', fontWeight: 600 }}>Latest Pre-Delivery</span>
             </button>
           </div>
         )}
@@ -180,7 +180,7 @@ export const ErrorHistogram = React.memo(function ErrorHistogram({
                     </div>
                     {showComparison && (
                       <div style={{ color: 'var(--color-latest)', fontWeight: 600, marginTop: '2px' }}>
-                        Gate-Closure: {d.latestCount} Half-Hours ({d.latestPct.toFixed(1)}%)
+                        Latest Pre-Delivery: {d.latestCount} Half-Hours ({d.latestPct.toFixed(1)}%)
                       </div>
                     )}
                   </div>

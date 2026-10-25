@@ -17,7 +17,7 @@ interface AccuracyViewProps {
 }
 
 export function AccuracyView({ state, onSelectDate }: AccuracyViewProps) {
-  // Comparison toggle between "Decision-Time Forecast" and "Latest Gate-Closure Forecast"
+  // Comparison toggle between "Decision-Time Forecast" and "Latest Pre-Delivery Forecast"
   const [evaluationMode, setEvaluationMode] = useState<'decision' | 'compare'>('compare');
   const showComparison = evaluationMode === 'compare';
 
@@ -117,6 +117,13 @@ export function AccuracyView({ state, onSelectDate }: AccuracyViewProps) {
     return result.sort((a, b) => a.date.localeCompare(b.date));
   }, [timeseriesData, state.deliveryDate]);
 
+  // Compute dynamic count of days with positive bias (forecast > actual) from daily KPIs
+  const positiveDays = useMemo(
+    () => dailyKpis.filter((d) => d.bias_mw > 0).length,
+    [dailyKpis]
+  );
+  const totalDays = dailyKpis.length;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       {/* Error state */}
@@ -158,7 +165,7 @@ export function AccuracyView({ state, onSelectDate }: AccuracyViewProps) {
               { value: 'decision', label: `D-1 ${state.decisionTime} Decision Cutoff Only` },
               {
                 value: 'compare',
-                label: 'Compare with Gate-Closure Latest',
+                label: 'Compare with Latest Pre-Delivery',
                 badge: 'Leakage Delta',
               },
             ]}
@@ -168,8 +175,13 @@ export function AccuracyView({ state, onSelectDate }: AccuracyViewProps) {
         </div>
       </div>
 
-      {/* Systematic Bias Advisory Banner */}
-      <BiasAlertBanner metrics={metrics} decisionTime={state.decisionTime} />
+      {/* Systematic Bias Advisory Banner (dynamically computed from data) */}
+      <BiasAlertBanner
+        metrics={metrics}
+        decisionTime={state.decisionTime}
+        positiveDays={totalDays > 0 ? positiveDays : undefined}
+        totalDays={totalDays > 0 ? totalDays : undefined}
+      />
 
       {/* Monthly Trading KPI Cards with Trader Tooltips & Leakage Difference */}
       <KPICards

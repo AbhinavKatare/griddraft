@@ -1,0 +1,16 @@
+# Python caches and local virtualenvs
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache
+.coverage
+htmlcov/
+.venv
+venv/
+ENV/
+
+# Tests and documentation
+tests/
+*.md
+!README.md

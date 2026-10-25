@@ -63,7 +63,7 @@ class TestMetricsPropertiesAndEdgeCases:
 
         - Over-forecast (forecast > actual):
             Trader expected more generation than materialized.
-            Shortfall is positive (+2,000 MW deficit exposed to imbalance cashout).
+            Shortfall is positive (+2,000 MW deficit exposed to imbalance price settlement).
         - Under-forecast (forecast < actual):
             Trader has excess generation. Shortfall is zero (0 MW deficit).
         """
@@ -252,3 +252,114 @@ class TestStratifiedAnalyticsMetrics:
         assert h2.sample_count == 2
         assert h2.mean_forecast_mw == 8500.0
         assert h2.mae_mw == 400.0  # (500 + 300) / 2
+
+    def test_lag_analysis_exact_kpi_equality(self) -> None:
+        """
+        Protects against: Discrepancies between primary KPIs and lag-0 temporal analysis.
+        Asserts that lag_0.mae_mw == kpi.mae_mw and lag_0.rmse_mw == kpi.rmse_mw identically.
+        """
+        from app.analytics.metrics import compute_lag_analysis
+
+        times = pd.date_range("2026-01-01 00:00:00", "2026-01-02 23:30:00", freq="30min", tz="UTC")
+        np.random.seed(42)
+        acts = np.random.uniform(5000.0, 15000.0, size=len(times))
+        fcs = acts + np.random.normal(1500.0, 800.0, size=len(times))
+
+        df = pd.DataFrame({"startTime": times, "actual_mw": acts, "forecast_mw": fcs})
+        kpis = calculate_forecast_metrics(actual=acts, forecast=fcs)
+
+        lag_results = compute_lag_analysis(df, max_lags=4)
+        lag_0 = next((r for r in lag_results if r["lag_hours"] == 0.0), None)
+
+        assert lag_0 is not None
+        assert lag_0["mae_mw"] == kpis.mae_mw
+        assert lag_0["rmse_mw"] == kpis.rmse_mw
+        assert lag_0["mean_bias_mw"] == kpis.bias_mw
+        assert lag_0["sample_count"] == len(times)
+
+    def test_signed_error_and_shortfall_buffer_decomposition(self) -> None:
+        """
+        Protects against: Inconsistent buffer calculations.
+        Asserts: total_buffer = systematic_bias + residual_quantile.
+        """
+        from app.analytics.risk import decompose_shortfall_buffer
+
+        shortfalls = np.array([0.0, 500.0, 1200.0, 1800.0, 2500.0, 3200.0, 4500.0])
+        decomp = decompose_shortfall_buffer(shortfalls, quantile=0.90)
+
+        assert decomp.total_buffer_mw >= decomp.systematic_bias_mw
+        assert round(decomp.total_buffer_mw, 1) == round(decomp.systematic_bias_mw + decomp.residual_quantile_mw, 1)
+
+    def test_backtest_coverage_in_sample_and_prior_days(self) -> None:
+        """
+        Protects against: Risk under-estimation across in-sample and prior-days regimes.
+        """
+        from app.analytics.risk import calculate_safe_wind_profile
+
+        times = pd.date_range("2026-01-05 00:00:00", "2026-01-05 23:30:00", freq="30min", tz="UTC")
+        fcs = np.full(48, 10000.0)
+        # Outturn falls short by 1,000 MW in 4 periods, 500 MW in 20 periods, and exceeds in 24 periods
+        acts = np.full(48, 10500.0)
+        acts[:4] = 9000.0
+        acts[4:24] = 9500.0
+
+        target_df = pd.DataFrame({
+            "startTime": times,
+            "settlementDate": "2026-01-05",
+            "settlementPeriod": list(range(1, 49)),
+            "forecast_mw": fcs,
+            "actual_mw": acts,
+        })
+
+        # Mode A: In-sample
+        summary_in = calculate_safe_wind_profile(target_df, quantile=0.90, mode="in_sample")
+        assert summary_in.backtest is not None
+        assert summary_in.backtest.empirical_coverage_pct >= 90.0
+
+        # Mode B: Prior-days with historical data
+        prior_times = pd.date_range("2026-01-01 00:00:00", "2026-01-04 23:30:00", freq="30min", tz="UTC")
+        prior_df = pd.DataFrame({
+            "startTime": prior_times,
+            "settlementDate": [str(t.date()) for t in prior_times],
+            "settlementPeriod": [((t.hour * 2) + (t.minute // 30) + 1) for t in prior_times],
+            "forecast_mw": np.full(len(prior_times), 9000.0),
+            "actual_mw": np.full(len(prior_times), 8000.0),  # Constant 1,000 MW shortfall
+        })
+        summary_prior = calculate_safe_wind_profile(
+            target_df, quantile=0.90, mode="prior_days", full_history_df=prior_df
+        )
+        assert summary_prior.shortfall_quantile_mw == 1000.0
+        assert summary_prior.backtest is not None
+
+    def test_europe_london_dst_transitions_23h_and_25h(self) -> None:
+        """
+        Protects against: Timezone shifts across Europe/London clock changes.
+        - Spring forward (March 29, 2026): 23-hour clock switch day.
+        - Fall back (October 25, 2026): 25-hour clock switch day.
+        """
+        from app.analytics.forecast_selection import select_decision_forecast
+
+        # 1. Delivery on March 30, 2026 (day after spring forward).
+        # Cutoff at 09:00 London time on March 29 is 08:00 UTC (since clocks switched at 01:00 UTC).
+        df_spring = pd.DataFrame([{
+            "startTime": "2026-03-30 12:00:00Z",
+            "publishTime": "2026-03-29 07:30:00Z",
+            "generation": 5000.0,
+        }])
+        res_spring = select_decision_forecast(
+            df_spring, cutoff_time_of_day="09:00", cutoff_day_offset=1, tz="Europe/London"
+        )
+        assert res_spring.iloc[0]["cutoff_time"] == pd.Timestamp("2026-03-29 08:00:00", tz="UTC")
+
+        # 2. Delivery on October 25, 2026 (the fall-back day itself).
+        # Cutoff at 09:00 London time on D-1 (October 24) is 08:00 UTC (since Oct 24 was in BST, UTC+1).
+        df_fall = pd.DataFrame([{
+            "startTime": "2026-10-25 12:00:00Z",
+            "publishTime": "2026-10-24 07:30:00Z",
+            "generation": 6000.0,
+        }])
+        res_fall = select_decision_forecast(
+            df_fall, cutoff_time_of_day="09:00", cutoff_day_offset=1, tz="Europe/London"
+        )
+        assert res_fall.iloc[0]["cutoff_time"] == pd.Timestamp("2026-10-24 08:00:00", tz="UTC")
+

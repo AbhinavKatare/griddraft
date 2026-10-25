@@ -1,5 +1,6 @@
 """Application configuration module with environment overrides."""
 
+import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,9 +21,17 @@ class Settings(BaseSettings):
     # Cache & Storage
     base_dir: Path = Path(__file__).resolve().parent.parent
     cache_dir: Path = (
-        Path(__file__).resolve().parent.parent.parent / "data" / "cache"
-        if (Path(__file__).resolve().parent.parent.parent / "data" / "cache").exists()
-        else Path(__file__).resolve().parent.parent / "data" / "cache"
+        Path(os.environ["WIND_APP_CACHE_DIR"])
+        if "WIND_APP_CACHE_DIR" in os.environ
+        else (
+            Path(os.environ["CACHE_DIR"])
+            if "CACHE_DIR" in os.environ
+            else (
+                Path(__file__).resolve().parent.parent.parent / "data" / "cache"
+                if (Path(__file__).resolve().parent.parent.parent / "data" / "cache").exists()
+                else Path(__file__).resolve().parent.parent / "data" / "cache"
+            )
+        )
     )
 
     # CORS Settings

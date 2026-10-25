@@ -89,7 +89,7 @@ export const ErrorByHorizonChart = React.memo(function ErrorByHorizonChart({
             Forecast Accuracy Across Lead-Time Horizons
           </h3>
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            Error degradation as forecast lead time increases from gate closure (0h) to day-ahead auction (16.5–39.5h) and beyond (with &plusmn;1&sigma; confidence band)
+            Error degradation as forecast lead time increases from latest pre-delivery (0h) to day-ahead auction (16.5–39.5h) and beyond (with &plusmn;1&sigma; confidence band)
           </p>
         </div>
 

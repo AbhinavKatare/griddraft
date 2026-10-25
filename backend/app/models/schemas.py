@@ -59,7 +59,6 @@ class MonthlyKPIs(BaseModel):
     bias_direction: str = Field(..., description="'OVER_FORECAST' (long risk) or 'UNDER_FORECAST' (short risk)")
     mae_pct_of_mean_gen: float
     mae_pct_of_max_gen: float
-    mae_pct_of_capacity: Optional[float] = None
     mean_actual_mw: float
     mean_forecast_mw: float
     max_actual_mw: float
