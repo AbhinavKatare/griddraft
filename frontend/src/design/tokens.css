@@ -1,0 +1,160 @@
+/* ==========================================================================
+   Quiet Control Room Design System Tokens
+   UK Wind Forecast Decision Tool
+   ========================================================================== */
+
+:root {
+  /* Typography */
+  --font-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --text-xs: 0.75rem;     /* 12px */
+  --text-sm: 0.875rem;    /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.25rem;     /* 20px */
+  --text-xl: 1.75rem;     /* 28px */
+  --text-2xl: 2.5rem;     /* 40px */
+
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Spacing Grid (4/8px) */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-12: 3rem;    /* 48px */
+
+  /* Border Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Focus Ring */
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-forecast);
+
+  /* Light Theme Defaults */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f1f5f9;
+  --color-surface-elevated: #ffffff;
+  --color-surface-sunken: #edf2f7;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #cbd5e1;
+  --color-border-hover: #94a3b8;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-disabled: #94a3b8;
+
+  /* Domain Semantic Palette (WCAG AA Compliant) */
+  --color-actual: #0f766e;              /* Deep Teal */
+  --color-actual-bg: rgba(15, 118, 110, 0.08);
+  --color-actual-stroke: #0d9488;
+
+  --color-forecast: #b45309;            /* Amber */
+  --color-forecast-bg: rgba(180, 83, 9, 0.08);
+  --color-forecast-stroke: #d97706;
+
+  --color-latest: #64748b;              /* Grey dashed (leaky) */
+  --color-latest-bg: rgba(100, 116, 139, 0.08);
+
+  --color-safe-wind: #047857;           /* Emerald / Soft Green */
+  --color-safe-wind-bg: rgba(16, 185, 129, 0.12);
+  --color-safe-wind-stroke: #10b981;
+
+  --color-shortfall: #be123c;           /* Coral / Crimson */
+  --color-shortfall-bg: rgba(225, 29, 72, 0.08);
+  --color-shortfall-stroke: #e11d48;
+
+  /* Shadows / Elevation */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+}
+
+/* Dark Theme Overrides */
+[data-theme='dark'] {
+  --color-bg: #090d16;
+  --color-surface: #111827;
+  --color-surface-hover: #162032;
+  --color-surface-elevated: #1a243b;
+  --color-surface-sunken: #060910;
+  --color-border: #1f2a40;
+  --color-border-subtle: #293855;
+  --color-border-hover: #3d5178;
+
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #8292ab;
+  --color-text-disabled: #475569;
+
+  /* Domain Palette Dark Adjustments */
+  --color-actual: #14b8a6;
+  --color-actual-bg: rgba(20, 184, 166, 0.12);
+  --color-actual-stroke: #2dd4bf;
+
+  --color-forecast: #f59e0b;
+  --color-forecast-bg: rgba(245, 158, 11, 0.12);
+  --color-forecast-stroke: #fbbf24;
+
+  --color-latest: #94a3b8;
+  --color-latest-bg: rgba(148, 163, 184, 0.12);
+
+  --color-safe-wind: #10b981;
+  --color-safe-wind-bg: rgba(16, 185, 129, 0.16);
+  --color-safe-wind-stroke: #34d399;
+
+  --color-shortfall: #f43f5e;
+  --color-shortfall-bg: rgba(244, 63, 94, 0.14);
+  --color-shortfall-stroke: #fb7185;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: #090d16;
+    --color-surface: #111827;
+    --color-surface-hover: #162032;
+    --color-surface-elevated: #1a243b;
+    --color-surface-sunken: #060910;
+    --color-border: #1f2a40;
+    --color-border-subtle: #293855;
+    --color-border-hover: #3d5178;
+
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #8292ab;
+    --color-text-disabled: #475569;
+
+    --color-actual: #14b8a6;
+    --color-actual-bg: rgba(20, 184, 166, 0.12);
+    --color-actual-stroke: #2dd4bf;
+
+    --color-forecast: #f59e0b;
+    --color-forecast-bg: rgba(245, 158, 11, 0.12);
+    --color-forecast-stroke: #fbbf24;
+
+    --color-latest: #94a3b8;
+    --color-latest-bg: rgba(148, 163, 184, 0.12);
+
+    --color-safe-wind: #10b981;
+    --color-safe-wind-bg: rgba(16, 185, 129, 0.16);
+    --color-safe-wind-stroke: #34d399;
+
+    --color-shortfall: #f43f5e;
+    --color-shortfall-bg: rgba(244, 63, 94, 0.14);
+    --color-shortfall-stroke: #fb7185;
+  }
+}
