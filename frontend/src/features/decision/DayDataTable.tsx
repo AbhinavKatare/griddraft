@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Download, Eye } from 'lucide-react';
+import { VirtualTable } from '../../components/ui/VirtualTable.tsx';
 import { formatMW, formatSignedMW, formatUtcTime } from '../../lib/format.ts';
 import type { SafeWindPeriod, TimeseriesPoint } from '../../types.ts';
 
@@ -124,7 +125,7 @@ export function DayDataTable({
             Settlement Period Ledger ({sortedRows.length} Half-Hours)
           </h3>
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            Audit trail of forecasts, derated safe commitments, and metered actuals
+            Audit trail of forecasts, derated safe commitments, and metered actuals (virtualized for high-speed scrolling)
           </p>
         </div>
 
@@ -150,141 +151,143 @@ export function DayDataTable({
         </button>
       </div>
 
-      {/* Table Scroll Area */}
-      <div style={{ overflowX: 'auto', maxHeight: '420px' }}>
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            textAlign: 'left',
-            fontSize: 'var(--text-xs)',
-          }}
-        >
-          <thead
+      {/* Virtualized Table View */}
+      <VirtualTable
+        items={sortedRows}
+        rowHeight={40}
+        containerHeight={400}
+        style={{ border: 'none', borderRadius: 0 }}
+        renderHeader={() => (
+          <div
             style={{
-              backgroundColor: 'var(--color-surface-sunken)',
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              boxShadow: '0 1px 0 var(--color-border)',
+              display: 'grid',
+              gridTemplateColumns: '70px 110px 1fr 1fr 1fr 1fr 1fr 60px',
+              padding: '8px 12px',
+              fontSize: 'var(--text-xs)',
+              fontWeight: 600,
+              color: 'var(--color-text-muted)',
+              borderBottom: '1px solid var(--color-border)',
             }}
           >
-            <tr>
-              <th
-                onClick={() => handleSort('settlement_period')}
-                style={{ padding: '8px 12px', cursor: 'pointer', fontWeight: 600, color: 'var(--color-text-muted)' }}
+            <div onClick={() => handleSort('settlement_period')} style={{ cursor: 'pointer' }}>
+              SP {sortCol === 'settlement_period' && (sortAsc ? '▲' : '▼')}
+            </div>
+            <div>Start Time (UTC)</div>
+            <div
+              onClick={() => handleSort('decision_forecast_mw')}
+              style={{ cursor: 'pointer', textAlign: 'right', color: 'var(--color-forecast)' }}
+            >
+              Forecast (MW) {sortCol === 'decision_forecast_mw' && (sortAsc ? '▲' : '▼')}
+            </div>
+            <div
+              onClick={() => handleSort('safe_wind_mw')}
+              style={{ cursor: 'pointer', textAlign: 'right', color: 'var(--color-safe-wind)' }}
+            >
+              Safe Wind (MW) {sortCol === 'safe_wind_mw' && (sortAsc ? '▲' : '▼')}
+            </div>
+            <div
+              onClick={() => handleSort('actual_mw')}
+              style={{ cursor: 'pointer', textAlign: 'right', color: 'var(--color-actual)' }}
+            >
+              Actual (MW) {sortCol === 'actual_mw' && (sortAsc ? '▲' : '▼')}
+            </div>
+            <div
+              onClick={() => handleSort('error_mw')}
+              style={{ cursor: 'pointer', textAlign: 'right' }}
+            >
+              Error (MW) {sortCol === 'error_mw' && (sortAsc ? '▲' : '▼')}
+            </div>
+            <div
+              onClick={() => handleSort('shortfall_mw')}
+              style={{ cursor: 'pointer', textAlign: 'right', color: 'var(--color-shortfall)' }}
+            >
+              Shortfall (MW) {sortCol === 'shortfall_mw' && (sortAsc ? '▲' : '▼')}
+            </div>
+            <div style={{ textAlign: 'center' }}>Action</div>
+          </div>
+        )}
+        renderRow={(row) => {
+          const hasNoForecast = row.decision_forecast_mw === null;
+          return (
+            <div
+              key={row.start_time}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '70px 110px 1fr 1fr 1fr 1fr 1fr 60px',
+                padding: '0 12px',
+                height: '40px',
+                alignItems: 'center',
+                fontSize: 'var(--text-xs)',
+                borderBottom: '1px solid var(--color-border)',
+                backgroundColor: hasNoForecast ? 'rgba(225, 29, 72, 0.05)' : 'transparent',
+                transition: 'background-color 0.12s ease',
+              }}
+            >
+              <div className="tabular-nums" style={{ fontWeight: 600 }}>
+                {row.settlement_period}
+              </div>
+              <div className="tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
+                {formatUtcTime(row.start_time)}
+              </div>
+              <div
+                className="tabular-nums"
+                style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-forecast)' }}
               >
-                SP {sortCol === 'settlement_period' && (sortAsc ? '▲' : '▼')}
-              </th>
-              <th style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                Start Time (UTC)
-              </th>
-              <th
-                onClick={() => handleSort('decision_forecast_mw')}
-                style={{ padding: '8px 12px', cursor: 'pointer', textAlign: 'right', fontWeight: 600, color: 'var(--color-forecast)' }}
+                {hasNoForecast ? (
+                  <span style={{ color: 'var(--color-shortfall)', fontStyle: 'italic' }}>Missing</span>
+                ) : (
+                  formatMW(row.decision_forecast_mw, 0, false)
+                )}
+              </div>
+              <div
+                className="tabular-nums"
+                style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-safe-wind)' }}
               >
-                Forecast (MW) {sortCol === 'decision_forecast_mw' && (sortAsc ? '▲' : '▼')}
-              </th>
-              <th
-                onClick={() => handleSort('safe_wind_mw')}
-                style={{ padding: '8px 12px', cursor: 'pointer', textAlign: 'right', fontWeight: 600, color: 'var(--color-safe-wind)' }}
+                {formatMW(row.safe_wind_mw, 0, false)}
+              </div>
+              <div
+                className="tabular-nums"
+                style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-actual)' }}
               >
-                Safe Wind (MW) {sortCol === 'safe_wind_mw' && (sortAsc ? '▲' : '▼')}
-              </th>
-              <th
-                onClick={() => handleSort('actual_mw')}
-                style={{ padding: '8px 12px', cursor: 'pointer', textAlign: 'right', fontWeight: 600, color: 'var(--color-actual)' }}
+                {formatMW(row.actual_mw, 0, false)}
+              </div>
+              <div
+                className="tabular-nums"
+                style={{ textAlign: 'right', color: 'var(--color-text-secondary)' }}
               >
-                Actual (MW) {sortCol === 'actual_mw' && (sortAsc ? '▲' : '▼')}
-              </th>
-              <th
-                onClick={() => handleSort('error_mw')}
-                style={{ padding: '8px 12px', cursor: 'pointer', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-muted)' }}
+                {formatSignedMW(row.error_mw, 0)}
+              </div>
+              <div
+                className="tabular-nums"
+                style={{
+                  textAlign: 'right',
+                  fontWeight: 600,
+                  color: (row.shortfall_mw || 0) > 0 ? 'var(--color-shortfall)' : 'var(--color-text-muted)',
+                }}
               >
-                Error (MW) {sortCol === 'error_mw' && (sortAsc ? '▲' : '▼')}
-              </th>
-              <th
-                onClick={() => handleSort('shortfall_mw')}
-                style={{ padding: '8px 12px', cursor: 'pointer', textAlign: 'right', fontWeight: 600, color: 'var(--color-shortfall)' }}
-              >
-                Shortfall (MW) {sortCol === 'shortfall_mw' && (sortAsc ? '▲' : '▼')}
-              </th>
-              <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedRows.map((row) => {
-              const hasNoForecast = row.decision_forecast_mw === null;
-              return (
-                <tr
-                  key={row.start_time}
+                {formatMW(row.shortfall_mw, 0, false)}
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => onSelectPeriod && onSelectPeriod(row)}
+                  aria-label={`View period ${row.settlement_period} details`}
                   style={{
-                    borderBottom: '1px solid var(--color-border)',
-                    backgroundColor: hasNoForecast
-                      ? 'rgba(225, 29, 72, 0.05)'
-                      : 'transparent',
-                    transition: 'background-color 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = hasNoForecast
-                      ? 'rgba(225, 29, 72, 0.08)'
-                      : 'var(--color-surface-hover)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = hasNoForecast
-                      ? 'rgba(225, 29, 72, 0.05)'
-                      : 'transparent';
+                    padding: '4px',
+                    color: 'var(--color-text-muted)',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
                   }}
                 >
-                  <td className="tabular-nums" style={{ padding: '8px 12px', fontWeight: 600 }}>
-                    {row.settlement_period}
-                  </td>
-                  <td className="tabular-nums" style={{ padding: '8px 12px', color: 'var(--color-text-secondary)' }}>
-                    {formatUtcTime(row.start_time)}
-                  </td>
-                  <td className="tabular-nums" style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--color-forecast)' }}>
-                    {hasNoForecast ? (
-                      <span style={{ color: 'var(--color-shortfall)', fontStyle: 'italic' }}>Missing</span>
-                    ) : (
-                      formatMW(row.decision_forecast_mw, 0, false)
-                    )}
-                  </td>
-                  <td className="tabular-nums" style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--color-safe-wind)' }}>
-                    {formatMW(row.safe_wind_mw, 0, false)}
-                  </td>
-                  <td className="tabular-nums" style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--color-actual)' }}>
-                    {formatMW(row.actual_mw, 0, false)}
-                  </td>
-                  <td className="tabular-nums" style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--color-text-secondary)' }}>
-                    {formatSignedMW(row.error_mw, 0)}
-                  </td>
-                  <td className="tabular-nums" style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: (row.shortfall_mw || 0) > 0 ? 'var(--color-shortfall)' : 'var(--color-text-muted)' }}>
-                    {formatMW(row.shortfall_mw, 0, false)}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => onSelectPeriod && onSelectPeriod(row)}
-                      aria-label={`View period ${row.settlement_period} details`}
-                      style={{
-                        padding: '4px',
-                        color: 'var(--color-text-muted)',
-                        borderRadius: 'var(--radius-sm)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Eye size={14} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  <Eye size={14} />
+                </button>
+              </div>
+            </div>
+          );
+        }}
+      />
     </div>
   );
 }

@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Area,
+  Brush,
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -21,7 +23,7 @@ interface HeroChartProps {
   deliveryDate: string;
 }
 
-export function HeroChart({
+export const HeroChart = React.memo(function HeroChart({
   timeseriesPoints,
   safeWind,
   showLeakyLine,
@@ -29,6 +31,18 @@ export function HeroChart({
   quantile,
   deliveryDate,
 }: HeroChartProps) {
+  // Interactive series visibility state
+  const [visibleSeries, setVisibleSeries] = useState({
+    actual: true,
+    forecast: true,
+    safeWind: true,
+    latest: true,
+  });
+
+  const toggleSeries = (key: keyof typeof visibleSeries) => {
+    setVisibleSeries((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   // Join safe-wind values to timeseries points for charting
   const chartData = useMemo(() => {
     const safeMap = new Map<string, number>();
@@ -89,10 +103,24 @@ export function HeroChart({
           </p>
         </div>
 
-        {/* Legend */}
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '14px', fontSize: 'var(--text-xs)' }}>
+        {/* Interactive Clickable Legend (Toggling) */}
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', fontSize: 'var(--text-xs)' }}>
           {/* Actuals */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={() => toggleSeries('actual')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)',
+              backgroundColor: visibleSeries.actual ? 'var(--color-surface-elevated)' : 'transparent',
+              opacity: visibleSeries.actual ? 1 : 0.45,
+              cursor: 'pointer',
+            }}
+          >
             <span
               style={{
                 width: '12px',
@@ -102,10 +130,24 @@ export function HeroChart({
               }}
             />
             <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Actual Metered (FUELHH)</span>
-          </div>
+          </button>
 
           {/* Decision Forecast */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={() => toggleSeries('forecast')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)',
+              backgroundColor: visibleSeries.forecast ? 'var(--color-surface-elevated)' : 'transparent',
+              opacity: visibleSeries.forecast ? 1 : 0.45,
+              cursor: 'pointer',
+            }}
+          >
             <span
               style={{
                 width: '12px',
@@ -115,10 +157,24 @@ export function HeroChart({
               }}
             />
             <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Decision Forecast (D-1)</span>
-          </div>
+          </button>
 
           {/* Safe Wind Band */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={() => toggleSeries('safeWind')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)',
+              backgroundColor: visibleSeries.safeWind ? 'var(--color-surface-elevated)' : 'transparent',
+              opacity: visibleSeries.safeWind ? 1 : 0.45,
+              cursor: 'pointer',
+            }}
+          >
             <span
               style={{
                 width: '12px',
@@ -131,11 +187,25 @@ export function HeroChart({
             <span style={{ fontWeight: 600, color: 'var(--color-safe-wind)' }}>
               Safe Wind (P{Math.round(quantile * 100)} {safeWindMode === 'prior_days' ? 'prior-days' : 'in-sample'})
             </span>
-          </div>
+          </button>
 
           {/* Leaky line toggle legend */}
           {showLeakyLine && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => toggleSeries('latest')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--color-border)',
+                backgroundColor: visibleSeries.latest ? 'var(--color-surface-elevated)' : 'transparent',
+                opacity: visibleSeries.latest ? 1 : 0.45,
+                cursor: 'pointer',
+              }}
+            >
               <span
                 style={{
                   width: '12px',
@@ -144,15 +214,19 @@ export function HeroChart({
                 }}
               />
               <span style={{ color: 'var(--color-latest)', fontWeight: 500 }}>Latest Revision (Leaky)</span>
-            </div>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Main Chart Canvas */}
-      <div style={{ width: '100%', height: '380px' }}>
+      {/* Main Chart Canvas with Brush/Zoom & Synchronized Crosshair */}
+      <div style={{ width: '100%', height: '420px' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+          <ComposedChart
+            syncId="day-ahead-chart"
+            data={chartData}
+            margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+          >
             <defs>
               <linearGradient id="safeWindFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-safe-wind-stroke)" stopOpacity={0.25} />
@@ -184,44 +258,65 @@ export function HeroChart({
               cursor={{ stroke: 'var(--color-border-hover)', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
 
-            {/* Shaded Safe-Wind Derated Band */}
-            <Area
-              type="monotone"
-              dataKey="safe_wind_mw"
-              fill="url(#safeWindFill)"
-              stroke="var(--color-safe-wind-stroke)"
+            {/* Decision Cutoff Reference Annotation */}
+            <ReferenceLine
+              x="09:00"
+              stroke="var(--color-forecast)"
+              strokeDasharray="4 4"
               strokeWidth={1.5}
-              isAnimationActive={!isLargeDataset}
-              animationDuration={animationDuration}
-              name={`Safe Wind P${Math.round(quantile * 100)}`}
+              label={{
+                value: 'D-1 Cutoff Window',
+                position: 'insideTopLeft',
+                fill: 'var(--color-forecast)',
+                fontSize: 10,
+                fontWeight: 600,
+              }}
             />
+
+            {/* Shaded Safe-Wind Derated Band */}
+            {visibleSeries.safeWind && (
+              <Area
+                type="monotone"
+                dataKey="safe_wind_mw"
+                fill="url(#safeWindFill)"
+                stroke="var(--color-safe-wind-stroke)"
+                strokeWidth={1.5}
+                isAnimationActive={!isLargeDataset}
+                animationDuration={animationDuration}
+                name={`Safe Wind P${Math.round(quantile * 100)}`}
+              />
+            )}
 
             {/* Decision-Time Forecast Line */}
-            <Line
-              type="monotone"
-              dataKey="decision_forecast_mw"
-              stroke="var(--color-forecast)"
-              strokeWidth={2.5}
-              dot={false}
-              isAnimationActive={!isLargeDataset}
-              animationDuration={animationDuration}
-              name="Decision Forecast"
-            />
+            {visibleSeries.forecast && (
+              <Line
+                type="monotone"
+                dataKey="decision_forecast_mw"
+                stroke="var(--color-forecast)"
+                strokeWidth={2.5}
+                dot={false}
+                isAnimationActive={!isLargeDataset}
+                animationDuration={animationDuration}
+                name="Decision Forecast"
+              />
+            )}
 
             {/* Actual Outturn Line */}
-            <Line
-              type="monotone"
-              dataKey="actual_mw"
-              stroke="var(--color-actual)"
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={!isLargeDataset}
-              animationDuration={animationDuration}
-              name="Actual Generation"
-            />
+            {visibleSeries.actual && (
+              <Line
+                type="monotone"
+                dataKey="actual_mw"
+                stroke="var(--color-actual)"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={!isLargeDataset}
+                animationDuration={animationDuration}
+                name="Actual Generation"
+              />
+            )}
 
             {/* Ghost Leaky Line (Optional Toggle) */}
-            {showLeakyLine && (
+            {showLeakyLine && visibleSeries.latest && (
               <Line
                 type="monotone"
                 dataKey="latest_forecast_mw"
@@ -234,12 +329,21 @@ export function HeroChart({
                 name="Latest (Leaky)"
               />
             )}
+
+            {/* Interactive Brush/Zoom Slider */}
+            <Brush
+              dataKey="time_label"
+              height={26}
+              stroke="var(--color-border)"
+              fill="var(--color-surface-sunken)"
+              tickFormatter={() => ''}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
-}
+});
 
 /**
  * Custom Tooltip with tabular data and crosshair breakdown

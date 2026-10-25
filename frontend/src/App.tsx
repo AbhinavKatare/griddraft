@@ -1,14 +1,25 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { AnimatePresence, LazyMotion, domAnimation, motion } from 'motion/react';
 import { Header } from './components/Header.tsx';
 import { ControlBar } from './components/ControlBar.tsx';
-import { DecisionView } from './features/decision/DecisionView.tsx';
-import { AccuracyView } from './features/accuracy/AccuracyView.tsx';
-import { MethodologyDrawer } from './features/methodology/MethodologyDrawer.tsx';
+import { HeroChartSkeleton } from './components/ui/LoadingSkeleton.tsx';
 import { ToastContainer } from './components/ui/ToastContainer.tsx';
 import { useUrlState } from './hooks/useUrlState.ts';
 import { viewTransitionVariants } from './design/motion.ts';
 import type { ToastMessage, ViewTab } from './types.ts';
+
+// Lazy-loaded route and view bundles for optimal code-splitting and rapid initial paint
+const DecisionView = lazy(() =>
+  import('./features/decision/DecisionView.tsx').then((m) => ({ default: m.DecisionView }))
+);
+
+const AccuracyView = lazy(() =>
+  import('./features/accuracy/AccuracyView.tsx').then((m) => ({ default: m.AccuracyView }))
+);
+
+const MethodologyDrawer = lazy(() =>
+  import('./features/methodology/MethodologyDrawer.tsx').then((m) => ({ default: m.MethodologyDrawer }))
+);
 
 export function App() {
   const { state, updateState, stepDeliveryDay } = useUrlState();
@@ -57,7 +68,7 @@ export function App() {
           stepDeliveryDay={stepDeliveryDay}
         />
 
-        {/* Main Content Area with Direction-Aware Transitions */}
+        {/* Main Content Area with Lazy-Loaded Views and Suspense */}
         <main
           style={{
             flex: 1,
@@ -78,7 +89,9 @@ export function App() {
                 animate="center"
                 exit="exit"
               >
-                <DecisionView state={state} />
+                <Suspense fallback={<HeroChartSkeleton />}>
+                  <DecisionView state={state} />
+                </Suspense>
               </motion.div>
             ) : (
               <motion.div
@@ -89,22 +102,26 @@ export function App() {
                 animate="center"
                 exit="exit"
               >
-                <AccuracyView
-                  state={state}
-                  onSelectDate={(date) => {
-                    updateState({ deliveryDate: date, view: 'decision' });
-                  }}
-                />
+                <Suspense fallback={<HeroChartSkeleton />}>
+                  <AccuracyView
+                    state={state}
+                    onSelectDate={(date) => {
+                      updateState({ deliveryDate: date, view: 'decision' });
+                    }}
+                  />
+                </Suspense>
               </motion.div>
             )}
           </AnimatePresence>
         </main>
 
         {/* Slide-over Methodology Drawer */}
-        <MethodologyDrawer
-          isOpen={isMethodologyOpen}
-          onClose={() => setIsMethodologyOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <MethodologyDrawer
+            isOpen={isMethodologyOpen}
+            onClose={() => setIsMethodologyOpen(false)}
+          />
+        </Suspense>
 
         {/* Top-Right Notification Toasts */}
         <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />

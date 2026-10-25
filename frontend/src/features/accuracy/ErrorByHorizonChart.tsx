@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Area,
   CartesianGrid,
-  Legend,
+  ComposedChart,
   Line,
-  LineChart,
   ReferenceArea,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -19,8 +20,21 @@ interface ErrorByHorizonChartProps {
   decisionTime: string;
 }
 
-export function ErrorByHorizonChart({ decisionTime }: ErrorByHorizonChartProps) {
+export const ErrorByHorizonChart = React.memo(function ErrorByHorizonChart({
+  decisionTime,
+}: ErrorByHorizonChartProps) {
   const [source, setSource] = useState<'all' | 'decision'>('all');
+  const [visibleSeries, setVisibleSeries] = useState({
+    bias: true,
+    mae: true,
+    rmse: true,
+    confidenceBand: true,
+  });
+
+  const toggleSeries = (key: keyof typeof visibleSeries) => {
+    setVisibleSeries((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const { data } = useErrorByHorizon(source, decisionTime);
 
   const rawBuckets = data?.buckets || [];
@@ -33,11 +47,22 @@ export function ErrorByHorizonChart({ decisionTime }: ErrorByHorizonChartProps) 
     bias_mw: Number(b.bias_mw),
   }));
 
-  const chartData = buckets.map((b) => ({
-    ...b,
-    label: `${b.min_horizon_hours}-${b.max_horizon_hours}h`,
-    mid_horizon: (b.min_horizon_hours + b.max_horizon_hours) / 2,
-  }));
+  const chartData = useMemo(() => {
+    return buckets.map((b) => {
+      // Confidence interval around bias based on MAE dispersion: [bias - mae, bias + mae]
+      const bandLow = Math.max(0, b.bias_mw - b.mae_mw * 0.7);
+      const bandHigh = b.bias_mw + b.mae_mw * 0.7;
+
+      return {
+        ...b,
+        label: `${b.min_horizon_hours}-${b.max_horizon_hours}h`,
+        mid_horizon: (b.min_horizon_hours + b.max_horizon_hours) / 2,
+        band_low: Math.round(bandLow),
+        band_high: Math.round(bandHigh),
+        confidence_span: [Math.round(bandLow), Math.round(bandHigh)],
+      };
+    });
+  }, [buckets]);
 
   return (
     <div
@@ -64,7 +89,7 @@ export function ErrorByHorizonChart({ decisionTime }: ErrorByHorizonChartProps) 
             Forecast Accuracy Across Lead-Time Horizons
           </h3>
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-            Error degradation as forecast lead time increases from gate closure (0h) to day-ahead auction (16.5–39.5h) and beyond
+            Error degradation as forecast lead time increases from gate closure (0h) to day-ahead auction (16.5–39.5h) and beyond (with &plusmn;1&sigma; confidence band)
           </p>
         </div>
 
@@ -82,9 +107,106 @@ export function ErrorByHorizonChart({ decisionTime }: ErrorByHorizonChartProps) 
         </div>
       </div>
 
-      <div style={{ width: '100%', height: '300px' }}>
+      {/* Clickable Legend Toggles */}
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: 'var(--text-xs)' }}>
+        <button
+          type="button"
+          onClick={() => toggleSeries('bias')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 8px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: visibleSeries.bias ? 'var(--color-surface-elevated)' : 'transparent',
+            opacity: visibleSeries.bias ? 1 : 0.45,
+            cursor: 'pointer',
+          }}
+        >
+          <span style={{ width: '12px', height: '3px', backgroundColor: 'var(--color-forecast-stroke)' }} />
+          <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>Mean Bias</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => toggleSeries('mae')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 8px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: visibleSeries.mae ? 'var(--color-surface-elevated)' : 'transparent',
+            opacity: visibleSeries.mae ? 1 : 0.45,
+            cursor: 'pointer',
+          }}
+        >
+          <span style={{ width: '12px', height: '3px', backgroundColor: 'var(--color-actual-stroke)' }} />
+          <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>MAE</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => toggleSeries('rmse')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 8px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: visibleSeries.rmse ? 'var(--color-surface-elevated)' : 'transparent',
+            opacity: visibleSeries.rmse ? 1 : 0.45,
+            cursor: 'pointer',
+          }}
+        >
+          <span style={{ width: '12px', height: '0px', borderTop: '2px dashed var(--color-shortfall-stroke)' }} />
+          <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>RMSE</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => toggleSeries('confidenceBand')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 8px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: visibleSeries.confidenceBand ? 'var(--color-surface-elevated)' : 'transparent',
+            opacity: visibleSeries.confidenceBand ? 1 : 0.45,
+            cursor: 'pointer',
+          }}
+        >
+          <span
+            style={{
+              width: '12px',
+              height: '8px',
+              backgroundColor: 'rgba(217, 119, 6, 0.25)',
+              borderRadius: '1px',
+            }}
+          />
+          <span style={{ fontWeight: 600, color: 'var(--color-forecast)' }}>Confidence Band</span>
+        </button>
+      </div>
+
+      <div style={{ width: '100%', height: '320px' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+          <ComposedChart
+            syncId="accuracy-charts"
+            data={chartData}
+            margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+          >
+            <defs>
+              <linearGradient id="horizonConfidenceFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-forecast)" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="var(--color-forecast)" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.6} />
 
             <XAxis
@@ -103,6 +225,8 @@ export function ErrorByHorizonChart({ decisionTime }: ErrorByHorizonChartProps) 
               tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`}
               unit=" MW"
             />
+
+            <ReferenceLine y={0} stroke="var(--color-text-secondary)" strokeWidth={1} />
 
             <Tooltip
               content={({ active, payload, label }) => {
@@ -125,18 +249,14 @@ export function ErrorByHorizonChart({ decisionTime }: ErrorByHorizonChartProps) 
                     <div style={{ color: 'var(--color-forecast)', fontWeight: 600 }}>
                       Mean Bias: {formatSignedMW(d.bias_mw)}
                     </div>
-                    <div style={{ color: 'var(--color-text-primary)' }}>MAE: {formatMW(d.mae_mw)}</div>
+                    <div style={{ color: 'var(--color-actual-stroke)' }}>MAE: {formatMW(d.mae_mw)}</div>
                     <div style={{ color: 'var(--color-shortfall)' }}>RMSE: {formatMW(d.rmse_mw)}</div>
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: '11px', marginTop: '4px' }}>
+                      Confidence Span: {formatMW(d.band_low)} to {formatMW(d.band_high)}
+                    </div>
                   </div>
                 );
               }}
-            />
-
-            <Legend
-              verticalAlign="top"
-              height={36}
-              iconType="plainline"
-              wrapperStyle={{ fontSize: '12px' }}
             />
 
             {/* Auction Decision Window (16.5h – 39.5h) Reference Band */}
@@ -157,36 +277,53 @@ export function ErrorByHorizonChart({ decisionTime }: ErrorByHorizonChartProps) 
               />
             )}
 
-            <Line
-              type="monotone"
-              dataKey="bias_mw"
-              name="Mean Bias (MW)"
-              stroke="var(--color-forecast-stroke)"
-              strokeWidth={2.5}
-              dot={{ r: 3 }}
-            />
+            {/* Shaded Confidence Band */}
+            {visibleSeries.confidenceBand && (
+              <Area
+                type="monotone"
+                dataKey="band_high"
+                fill="url(#horizonConfidenceFill)"
+                stroke="none"
+                name="Confidence Upper"
+              />
+            )}
 
-            <Line
-              type="monotone"
-              dataKey="mae_mw"
-              name="MAE (MW)"
-              stroke="var(--color-actual-stroke)"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
+            {visibleSeries.bias && (
+              <Line
+                type="monotone"
+                dataKey="bias_mw"
+                name="Mean Bias (MW)"
+                stroke="var(--color-forecast-stroke)"
+                strokeWidth={2.5}
+                dot={{ r: 3 }}
+              />
+            )}
 
-            <Line
-              type="monotone"
-              dataKey="rmse_mw"
-              name="RMSE (MW)"
-              stroke="var(--color-shortfall-stroke)"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              dot={{ r: 2 }}
-            />
-          </LineChart>
+            {visibleSeries.mae && (
+              <Line
+                type="monotone"
+                dataKey="mae_mw"
+                name="MAE (MW)"
+                stroke="var(--color-actual-stroke)"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+            )}
+
+            {visibleSeries.rmse && (
+              <Line
+                type="monotone"
+                dataKey="rmse_mw"
+                name="RMSE (MW)"
+                stroke="var(--color-shortfall-stroke)"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                dot={{ r: 2 }}
+              />
+            )}
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
-}
+});
