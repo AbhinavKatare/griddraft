@@ -70,12 +70,10 @@ frontend/*.tsbuildinfo
 .eslintcache
 
 # Data Caching & Artifacts
-# Parquet files and local raw JSON responses are cached locally and not checked into source control
-data/cache/*.parquet
-data/cache/*.json
-!data/cache/.gitkeep
-backend/data/cache/*.parquet
-backend/data/cache/*.json
+# Bundle canonical January 2026 Parquet cache in image
+!data/cache/*.parquet
+!backend/data/cache/*.parquet
+!backend/data/cache/*.json
 !backend/data/cache/.gitkeep
 
 # Jupyter Notebooks Checkpoints

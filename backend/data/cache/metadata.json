@@ -1,0 +1,21 @@
+{
+  "dataset_scope": "January 2026 UK Wind Forecast and Generation",
+  "last_updated_utc": "2026-10-24T15:22:58.637222+00:00",
+  "source": "Elexon Insights Solution (BMRS)",
+  "fuelhh": {
+    "record_count": 1488,
+    "min_start_time": "2026-01-01T00:00:00+00:00",
+    "max_start_time": "2026-01-31T23:30:00+00:00",
+    "min_generation_mw": 1695.0,
+    "max_generation_mw": 17805.0,
+    "mean_generation_mw": 11580.737231182795
+  },
+  "windfor": {
+    "record_count": 18104,
+    "unique_delivery_slots": 744,
+    "min_publish_time": "2025-12-30T02:30:00+00:00",
+    "max_publish_time": "2026-02-01T22:30:00+00:00",
+    "min_start_time": "2026-01-01T00:00:00+00:00",
+    "max_start_time": "2026-01-31T23:00:00+00:00"
+  }
+}

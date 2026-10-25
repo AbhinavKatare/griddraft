@@ -2,11 +2,16 @@
 
 from contextlib import asynccontextmanager
 import logging
+import os
+from pathlib import Path
 from typing import AsyncGenerator, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.requests import Request
 
 from app.config import Settings, settings
 from app.ingestion.pipeline import run_january_2026_ingestion
@@ -102,6 +107,22 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
     # Include Versioned API v1 Router (All legacy routes removed)
     app.include_router(v1_router)
 
+    # 5. Frontend Single-Origin Serving (if frontend/dist or STATIC_DIR exists)
+    static_env = os.environ.get("STATIC_DIR")
+    if static_env:
+        static_dir = Path(static_env)
+    else:
+        static_dir = Path(__file__).resolve().parent.parent / "static"
+        if not static_dir.exists():
+            static_dir = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+    has_frontend = static_dir.exists() and (static_dir / "index.html").exists()
+
+    if has_frontend:
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
     # Health, Root, and Metrics Endpoints
     @app.get(
         "/health",
@@ -120,10 +141,13 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
     @app.get(
         "/",
         tags=["System"],
-        summary="Service root endpoint",
+        summary="Service root endpoint or frontend SPA",
     )
-    async def root() -> dict:
-        """Service root providing entrypoint links and metadata."""
+    async def root(request: Request):
+        """Service root returning SPA index.html for browsers or JSON metadata for API clients."""
+        accept = request.headers.get("accept", "")
+        if "text/html" in accept and has_frontend:
+            return FileResponse(static_dir / "index.html")
         return {
             "service": cfg.app_name,
             "version": cfg.app_version,
@@ -142,6 +166,15 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
     async def timing_metrics() -> dict:
         """Endpoint providing request counts and latency statistics."""
         return metrics_tracker.get_summary()
+
+    # SPA Catch-All fallback for client-side routing (e.g. /decision, /accuracy, /methodology)
+    if has_frontend:
+        @app.get("/{full_path:path}", include_in_schema=False)
+        async def spa_catch_all(full_path: str):
+            target_file = static_dir / full_path
+            if target_file.is_file():
+                return FileResponse(target_file)
+            return FileResponse(static_dir / "index.html")
 
     return app
 

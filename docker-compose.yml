@@ -1,0 +1,68 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Unified Single-Origin Production Container (FastAPI + React SPA)
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: uk-wind-forecast:latest
+    container_name: uk_wind_forecast_prod
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - WIND_APP_DEBUG=false
+      - STATIC_DIR=/app/static
+      - CACHE_DIR=/app/data/cache
+    volumes:
+      - ./backend/data/cache:/app/data/cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # 2. Local Development: FastAPI Backend with Auto-Reload
+  # ----------------------------------------------------------------------------
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: uk_wind_backend_dev
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/data/cache:/app/data/cache
+    environment:
+      - WIND_APP_DEBUG=true
+      - WIND_APP_DEFAULT_DECISION_TIME=09:00
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  # ----------------------------------------------------------------------------
+  # 3. Local Development: Vite Frontend with Hot Module Replacement (HMR)
+  # ----------------------------------------------------------------------------
+  frontend-dev:
+    image: node:20-alpine
+    container_name: uk_wind_frontend_dev
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8001
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend-dev
+    restart: unless-stopped
+    profiles:
+      - dev
