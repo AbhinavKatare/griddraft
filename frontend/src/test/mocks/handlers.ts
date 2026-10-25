@@ -137,6 +137,54 @@ export const mockSafeWind = {
   ],
 };
 
+export const mockMonthlyKPIs = {
+  decision_time: '09:00',
+  total_half_hours: 1488,
+  matched_half_hours: 1488,
+  data_coverage_pct: 1.0,
+  mean_forecast_mw: 13432.8,
+  mean_actual_mw: 11580.9,
+  mean_bias_mw: 1851.9,
+  mae_mw: 2145.2,
+  rmse_mw: 2683.4,
+  mae_pct_of_mean_gen: 0.185,
+  mae_pct_of_max_gen: 0.110,
+  shortfall_percentiles: {
+    p50: 1680.0,
+    p90: 3728.0,
+    p95: 4310.0,
+    p99: 5490.0,
+  },
+};
+
+export const mockErrorByHorizon = {
+  source: 'all',
+  decision_time: '09:00',
+  total_revisions: 25604,
+  buckets: [
+    { min_horizon_hours: 0, max_horizon_hours: 6, sample_count: 3200, mae_mw: 1420.0, rmse_mw: 1810.0, bias_mw: 1210.0 },
+    { min_horizon_hours: 6, max_horizon_hours: 12, sample_count: 3200, mae_mw: 1750.0, rmse_mw: 2180.0, bias_mw: 1540.0 },
+    { min_horizon_hours: 12, max_horizon_hours: 18, sample_count: 3100, mae_mw: 1980.0, rmse_mw: 2450.0, bias_mw: 1720.0 },
+    { min_horizon_hours: 18, max_horizon_hours: 24, sample_count: 3100, mae_mw: 2150.0, rmse_mw: 2680.0, bias_mw: 1850.0 },
+    { min_horizon_hours: 24, max_horizon_hours: 36, sample_count: 5900, mae_mw: 2340.0, rmse_mw: 2920.0, bias_mw: 1940.0 },
+    { min_horizon_hours: 36, max_horizon_hours: 48, sample_count: 4200, mae_mw: 2580.0, rmse_mw: 3210.0, bias_mw: 2060.0 },
+    { min_horizon_hours: 48, max_horizon_hours: 66.5, sample_count: 2904, mae_mw: 2840.0, rmse_mw: 3510.0, bias_mw: 2180.0 },
+  ],
+};
+
+export const mockErrorByHour = {
+  decision_time: '09:00',
+  total_samples: 1488,
+  hours: Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    mean_forecast_mw: 13000 + (i % 6) * 200,
+    mean_actual_mw: 11200 + (i % 6) * 180,
+    bias_mw: 1800 + (i % 4) * 50,
+    mae_mw: 2100 + (i % 4) * 40,
+    rmse_mw: 2650 + (i % 4) * 50,
+  })),
+};
+
 export const handlers = [
   http.get('/api/v1/meta', () => {
     return HttpResponse.json(mockMeta);
@@ -150,8 +198,32 @@ export const handlers = [
     return HttpResponse.json(mockSnapshot);
   }),
 
+  http.get('/api/v1/forecast/snapshot', () => {
+    return HttpResponse.json(mockSnapshot);
+  }),
+
   http.get('/api/v1/risk/safe-wind', () => {
     return HttpResponse.json(mockSafeWind);
+  }),
+
+  http.get('/api/v1/metrics', () => {
+    return HttpResponse.json(mockMonthlyKPIs);
+  }),
+
+  http.get('/api/v1/error-by-horizon', () => {
+    return HttpResponse.json(mockErrorByHorizon);
+  }),
+
+  http.get('/api/v1/metrics/error-by-horizon', () => {
+    return HttpResponse.json(mockErrorByHorizon);
+  }),
+
+  http.get('/api/v1/error-by-hour', () => {
+    return HttpResponse.json(mockErrorByHour);
+  }),
+
+  http.get('/api/v1/metrics/error-by-hour', () => {
+    return HttpResponse.json(mockErrorByHour);
   }),
 
   http.get('/health', () => {
