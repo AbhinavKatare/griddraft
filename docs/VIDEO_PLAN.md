@@ -1,258 +1,223 @@
-# UK Wind Forecast Decision Tool — 10-Minute Video Script & Presentation Guide
+# UK Wind Forecast Decision Tool — Simple & Easy Video Script
 
-This document contains the exact, word-for-word rehearsal script, click-by-click UI actions, mouse positions, code walkthrough cues, and technical talking points.
+> **How to use this guide:**  
+> Read the spoken lines naturally at your own pace. All hard-to-read jargon has been removed. Every button click and screen action is clearly highlighted so you know exactly where to click and what to point at on the screen.
 
 ---
 
-## High-Level Video Blueprint
+## ⏱️ Fast Timing Plan (Under 10 Minutes Total)
 
-| Segment | Timing | Target Audience | Primary Goal |
+| Section | Target Time | Who You Are Talking To | What You Are Doing |
 | :--- | :--- | :--- | :--- |
-| **Part 1: Customer Presentation** | **0:00 – 4:45** (max 5:00) | Power Trading Desk Head, Portfolio Manager, Risk Officer | **Impress them**: Show pilot findings, commercial savings, causal leakage trap, and live portal demo |
-| **Part 2: Tech Lead Walkthrough** | **4:45 – 9:30** (max 5:00) | Engineering Lead, Quantitative Architect, Reviewer | **Make review easy**: Full knowledge transfer, architecture, storage design, causal invariants, 100% test coverage |
-| **Wrap-Up & Submission** | **9:30 – 10:00** (30 sec) | Both | Quick recap and public deployment verification |
+| **Part 1: Customer Demo** | **~4 Minutes** | The Power Trader / Client | Show the live website, click the features, and explain the real business value. |
+| **Part 2: Tech Lead Review**| **~4 Minutes** | The Senior Engineer / Tech Lead | Show how it was built, where the files are, how fast it runs, and how tests pass. |
+| **Wrap Up** | **30 Seconds** | Everyone | Quick goodbye and link check. |
 
 ---
 
-## Pre-Recording Checklist (Complete 2 Minutes Before Hitting Record)
+## 🛠️ Quick 1-Minute Prep Before Hitting Record
 
-1. **Wake Render Backend**:
-   - Open [https://griddraft.onrender.com/health](https://griddraft.onrender.com/health) in a browser tab. Confirm JSON response: `{"status":"healthy","version":"1.0.0","cache_loaded":true}`.
-2. **Open Production Portal**:
-   - Open [https://griddraft-one.vercel.app](https://griddraft-one.vercel.app) in Google Chrome (full-screen `F11` or maximized).
-   - Set zoom level to **110%** or **125%** so typography and charts look bold and legible on 1080p video.
-   - Confirm dark theme is active.
-3. **Open IDE / Code Editor**:
-   - Split editor or tabs ready:
-     - `backend/app/analytics/forecast_selection.py` (Line 115)
-     - `backend/app/analytics/risk.py` (Line 45)
-     - `README.md` (Mermaid diagram around line 42)
-     - Terminal tab with `python scripts/verify_numbers.py` ready.
-4. **Audio & Screen Settings**:
-   - Record system audio off / microphone on.
-   - Resolution: 1920x1080 at 30 or 60 fps.
+1. **Wake up the backend**: Open [https://griddraft.onrender.com/health](https://griddraft.onrender.com/health) in a browser tab. Make sure it shows `healthy`.
+2. **Open the live website**: Open [https://griddraft-one.vercel.app](https://griddraft-one.vercel.app) in full screen (`F11`).
+   - Zoom in slightly (press `Ctrl +` once to 110% or 125%) so cards and numbers are easy to read on video.
+   - Start on the **Decision** view (the default page).
+3. **Open VS Code in another window**:
+   - Have two files ready in tabs:
+     - `backend/app/analytics/forecast_selection.py`
+     - `backend/app/analytics/risk.py`
+   - Have a terminal open ready to run `python scripts/verify_numbers.py`.
 
 ---
 
-# Part 1: Customer Presentation (Pilot Project Output)
-**Audience:** Head of Day-Ahead Power Trading & Quantitative Portfolio Manager  
-**Tone:** Confident Senior Energy Quant. Direct, commercial, numbers-first.  
-**Target Duration:** Exactly 4 minutes 30 seconds (Hard stop at 4:50).
+# PART 1: Customer Demo (Simple & Fast)
+**Your Goal:** Show the customer how this tool saves them money and protects them from bad forecasts.  
+**Length:** ~4 minutes.
 
 ---
 
-### [0:00 – 0:50] 1. The Hook: The Systematic Over-Forecasting Hazard
-- **Screen:** Full-screen browser on `https://griddraft-one.vercel.app` (Decision View).
-- **Mouse Action:** Hover briefly over the Hero Chart peak.
-- **Word-for-Word Script:**
-  > *"Good morning. Over the last four weeks, we conducted a quantitative pilot project for your UK power trading desk, evaluating National Grid ESO's Day-Ahead wind generation forecasts against actual metered outturn across all 1,488 settlement periods of January 2026.*
-  > 
-  > *If you trade Day-Ahead power, your physical nominations are locked in before the 11:00 auction on D-1. If the national wind forecast tells your desk you will generate 14,000 MW, but outturn drops to 11,000 MW, your book is caught 3,000 MW short. That deficit is settled at punishing system imbalance cashout prices.*
-  > 
-  > *Our pilot revealed two critical findings: first, National Grid's models over-forecast in **27 out of 31 days** in January, with an average bias of **+1,852 MW**. Second, desks backtesting their trading algorithms routinely use forecasts published after the D-1 auction cutoff. That is **information leakage**—and it severely understates your true volumetric risk.*
-  > 
-  > *Today, I'm presenting the portal we engineered to solve this: the **UK Wind Forecast Decision Tool**."*
+### Step 1: The Problem (0:00 – 0:45)
+- **Where to look:** Full-screen browser on the live site (`https://griddraft-one.vercel.app`).
+- **Mouse action:** Move the mouse over the main chart.
+- **What to say:**
+  > *"Hi everyone. Today I'm excited to walk you through the UK Wind Forecast Decision Tool, built using real UK grid data from January 2026.*  
+  >  
+  > *If you trade power on the UK Day-Ahead market, you have to lock in how much electricity you're going to sell by 11:00 AM on the day before delivery.*  
+  >  
+  > *The problem is: the official wind forecast is often way too optimistic. In January, the forecast over-estimated wind power on **27 out of 31 days**, by an average of **1,852 Megawatts**.*  
+  >  
+  > *If you sell what the forecast promises, you will be caught short physical energy 87% of the time, and you'll have to pay expensive penalty fees to balance your position.*  
+  >  
+  > *We built this portal to give traders a realistic, conservative number they can actually count on before submitting their bids."*
 
 ---
 
-### [0:50 – 2:30] 2. Live Interactive Portal Demo (Click-by-Click)
-
-#### Action 1: Point Out the Global Control Room & Lineage [0:50 – 1:20]
-- **Mouse Action / Click:**
-  - Move mouse to the **Global Controls Bar** at the top.
-  - Hover over **Delivery Date**: `2026-01-15`.
-  - Click on **Decision Cutoff**: confirm `09:00 UTC` is selected.
-  - Point to the **Run Lineage Alert Banner** directly above the chart.
-- **Word-for-Word Script:**
-  > *"Here is the production platform. Notice the Controls Bar at the top. We are viewing delivery for **January 15, 2026** at the standard desk risk cutoff of **09:00 UTC on D-1**.*
-  > 
-  > *Look at the Run Lineage banner below: it explicitly confirms that every forecast point displayed was published on or before **09:00 UTC on January 14**. We enforce mathematical causality: not a single intra-day revision published after your auction cutoff is allowed to leak into this view."*
-
-#### Action 2: The Summary Strip & Safe Wind Derating [1:20 – 1:55]
-- **Mouse Action / Click:**
-  - Move mouse smoothly across the 3 top KPI summary cards in the **Summary Metric Strip**:
-    - Card 1: **Nominal Forecast**: `331,100 MWh`
-    - Card 2: **Safe Wind (P90)**: `228,500 MWh`
-    - Card 3: **Peak Procurement**: `2,200 MW`
-- **Word-for-Word Script:**
-  > *"Notice what the decision engine does with this data in the Summary Strip.*
-  > 
-  > *If your trader sells nominal forecast volume, they would bid **331.1 GWh** into the Day-Ahead auction. But look at the amber line on our chart: our P90 Safe Wind model derates that volume to **228.5 GWh**.*
-  > 
-  > *That leaves an implied peak shortfall of **2,200 MW**. Instead of waiting for the balancing mechanism to fine your desk at volatile cashout prices, our tool immediately sizes your backup thermal replacement contracts in advance."*
-
-#### Action 3: Exposing the Information Leakage Trap [1:55 – 2:30]
-- **Mouse Action / Click:**
-  - Click the **"Leaky Baseline"** toggle switch in the Control Bar.
-  - Watch the dashed grey line appear on the Hero Chart.
-  - Hover over Period 24 (12:00) where the dashed line is higher than the solid line.
-- **Word-for-Word Script:**
-  > *"Now watch what happens when I click this toggle: **Leaky Baseline**.*
-  > 
-  > *This dashed grey curve appears. That is the latest pre-delivery forecast published right before gate closure. Notice how dramatically it shifted from our solid decision baseline.*
-  > 
-  > *If a quant on your desk evaluates forecast quality using that dashed curve, they will conclude the forecast was accurate. But your trader had to commit at 09:00 on D-1! Relying on post-cutoff data gives you false confidence; our solid baseline represents the actual reality your capital faced."*
+### Step 2: The Decision Screen & Top Controls (0:45 – 1:30)
+- **Where to look:** Top control bar of the website.
+- **Actions on screen:**
+  1. Point mouse at **Delivery Date**: show `2026-01-15`.
+  2. Point mouse at **Cutoff Time**: click or hover over `09:00 UTC`.
+- **What to say:**
+  > *"Let's look at the live platform.*  
+  >  
+  > *Right at the top, we have our control bar. Here you can pick any delivery day in January 2026—for this demo, we're looking at **January 15**.*  
+  >  
+  > *Next to it is the **Cutoff Time**. We've selected **09:00 AM on D-1**.*  
+  >  
+  > *Why does this matter? Because we only use forecasts that were actually published before your decision deadline. We strictly block any newer forecasts from leaking into your backtest, so you see exactly what your trader saw on their screen at 9:00 AM."*
 
 ---
 
-### [2:30 – 4:00] 3. The 3 Executive Findings (Real January 2026 Data)
-
-#### Action 4: Navigate to Accuracy Suite [2:30 – 2:45]
-- **Mouse Action / Click:**
-  - Click the **"Accuracy"** tab in the main navigation bar.
-  - Notice the URL changes instantaneously to `/?view=accuracy` with state preserved.
-- **Word-for-Word Script:**
-  > *"Let's switch to the **Accuracy Suite** to examine the full-month ground truth across all 1,488 settlement periods."*
-
-#### Finding 1: The +1,852 MW Systematic Over-Forecast Bias [2:45 – 3:15]
-- **Mouse Action:**
-  - Point mouse to **Card 3 (Systematic Bias)** and the **Bias Advisory Banner** above it.
-- **Word-for-Word Script:**
-  > *"Finding Number 1: **Systematic Over-Forecasting**.*
-  > 
-  > *Across all 1,488 settlement intervals in January 2026, National Grid's models over-forecasted wind generation with a mean bias of **+1,851.9 MW**. As highlighted in this alert banner, the model was over-forecast in **27 out of 31 days** (87.1% of the month). A desk that sells nominal wind is structurally short 87% of the time."*
-
-#### Finding 2: The 341 MW Information Leakage Penalty [3:15 – 3:45]
-- **Mouse Action:**
-  - Point mouse to **Card 1 (Mean Absolute Error - MAE)** and the small badge below it.
-- **Word-for-Word Script:**
-  > *"Finding Number 2: **The 341 MW Information Leakage Penalty**.*
-  > 
-  > *At your true D-1 09:00 decision cutoff, the monthly MAE is **2,145.2 MW**—which represents **18.52% of mean actual generation**. But if you evaluate against latest pre-delivery forecasts, MAE drops to **1,804.2 MW**.*
-  > 
-  > *That **341 MW gap**—a 15.9% difference—is pure information leakage. Desks that don't account for point-in-time cutoffs are underestimating their volumetric risk by nearly 16%."*
-
-#### Finding 3: The 4,275 MW P90 Shortfall Buffer [3:45 – 4:10]
-- **Mouse Action:**
-  - Point mouse to **Card 4 (P90 Shortfall Buffer)** showing `4,274.9 MW`.
-- **Word-for-Word Script:**
-  > *"Finding Number 3: **The P90 Shortfall Buffer**.*
-  > 
-  > *To trade with 90% volumetric certainty, the desk needs a **4,275 MW buffer**. Crucially, our platform decomposes this: **+1,852 MW** is pure systematic bias, and **2,423 MW** is residual weather uncertainty."*
+### Step 3: Where is the Summary Strip & Safe Wind? (1:30 – 2:15)
+- **Where it is on screen:** Look right between the top control bar and the big chart. You will see a thin grey banner and **4 large summary cards**.
+- **Actions on screen:**
+  1. Point mouse at the thin banner: *"Auction Decision Snapshot: Cutoff at 09:00 UTC on D-1"*.
+  2. Move mouse across the 4 cards:
+     - **Card 1 (Forecast Day Volume)**: points to `331,100 MWh`.
+     - **Card 2 (Conservative 'Safe' Volume)**: points to `228,500 MWh`.
+     - **Card 3 (Peak Extra Procurement)**: points to `2,200 MW`.
+     - **Card 4 (Total Backup Energy)**: points to `102,600 MWh`.
+- **What to say:**
+  > *"Right below the controls and above the chart, you see our **Summary Strip**.*  
+  >  
+  > *The first card shows the raw forecast: **331,100 Megawatt-hours**. If your trader blindly sells that amount, they take on huge risk.*  
+  >  
+  > *The second card shows our **Safe Wind Volume**: **228,500 Megawatt-hours**. We've derated the forecast using a 90% confidence buffer so you don't over-promise.*  
+  >  
+  > *The third card tells you exactly how much backup power you need to line up in advance: **2,200 Megawatts** at peak.*  
+  >  
+  > *Instead of getting hit with unexpected penalty bills later, your desk knows your exact hedge requirements before the auction even starts."*
 
 ---
 
-### [4:10 – 4:45] 4. Commercial Value & Customer Pitch Wrap-Up
-- **Screen:** Hover over the Daily Bias chart at the bottom of the Accuracy page.
-- **Word-for-Word Script:**
-  > *"Why is this decomposition transformative for your desk?*
-  > 
-  > *Because systematic bias is predictable. You don't need to buy expensive, flexible tolling agreements to cover the entire 4,275 MW. You simply derate your Day-Ahead auction bids by 1,852 MW, and size your replacement hedges strictly for the true 2,423 MW weather variance.*
-  > 
-  > *In summary: this pilot turns wind forecast volatility from an uncontrolled balance sheet liability into a structured, quantitative trading edge. Thank you."*
-
----
-*(Brief pause / transition marker — 4:45)*
----
-
-# Part 2: Tech Lead Walkthrough (Architecture, Code & Practices)
-**Audience:** Head of Engineering / Tech Lead / Systems Architect  
-**Tone:** Senior Quantitative Systems Architect. Crisp, engineering-focused, zero fluff.  
-**Target Duration:** Exactly 4 minutes 45 seconds (4:45 – 9:30).
+### Step 4: The "Leaky Baseline" Toggle (2:15 – 3:00)
+- **Where it is on screen:** Back in the top control bar, look for the toggle switch labeled **"Leaky Baseline"**.
+- **Actions on screen:**
+  1. **Click the "Leaky Baseline" toggle switch**.
+  2. Watch the dashed grey line appear on the main chart.
+  3. Move mouse to hover where the dashed line is higher than the solid line.
+- **What to say:**
+  > *"Now watch what happens when I turn on this toggle: **Leaky Baseline**.*  
+  >  
+  > *A dashed grey curve appears on the chart. That dashed curve represents the last-minute forecast published right before delivery.*  
+  >  
+  > *Notice how much it changed from our solid decision line!*  
+  >  
+  > *Many trading desks make the mistake of evaluating their models against that dashed line. That's what we call **information leakage**—it makes you think the forecast was great, but that update arrived hours after your auction closed. Our solid line is the only number you actually had when you clicked submit."*
 
 ---
 
-### [4:45 – 5:45] 1. System Architecture & Split Production Deployment
-- **Screen:** Switch to IDE showing `README.md` Mermaid Diagram (Line 41) or display the architecture block.
-- **Mouse Action:** Trace from `Vercel (Frontend)` down to `Render (Backend)` and into `Snappy Parquet Cache`.
-- **Word-for-Word Script:**
-  > *"Now let's dive into the technical implementation for the engineering review.*
-  > 
-  > *First, **Deployment Architecture**: We run a decoupled split deployment. The React 19 single-page application is hosted globally on **Vercel** at `griddraft-one.vercel.app`. The backend is a multi-stage Dockerised **FastAPI** service running on **Render** at `griddraft.onrender.com`.*
-  > 
-  > *To eliminate cross-origin complexity and protect against CORS preflight latency, Vercel's edge rewrites all `/api/*` and `/health` requests directly to Render. The browser interacts with a single unified origin.*
-  > 
-  > *Second, **Storage Architecture**: Rather than deploying a relational database like Postgres or Redis, we store canonical Elexon BMRS datasets as Snappy-compressed Parquet files in `backend/data/cache/`.*
-  > 
-  > *The entire January 2026 dataset—18,104 forecast revisions and 1,488 actual intervals—takes only **122 KB on disk**. On container startup, PyArrow loads both tables directly into memory in under **15 milliseconds**. Queries execute in-memory with sub-5 millisecond response times and zero database network hops."*
+### Step 5: The Accuracy View & 3 Big Takeaways (3:00 – 4:15)
+- **Where it is on screen:** In the top navigation bar at the very top right, click **"Accuracy"**.
+- **Actions on screen:**
+  1. Click **"Accuracy"**. The page changes to show the monthly KPIs.
+  2. Point at **Card 1 (Mean Absolute Error - MAE)**: `2,145.2 MW`.
+  3. Point at **Card 3 (Systematic Bias)**: `+1,851.9 MW`.
+  4. Point at **Card 4 (P90 Shortfall Buffer)**: `4,274.9 MW`.
+- **What to say:**
+  > *"Now let's click on the **Accuracy** tab.*  
+  >  
+  > *Here are the three big takeaways from our whole month analysis:*  
+  >  
+  > *1. **The Average Error**: At decision time, the average error was **2,145 Megawatts**, or about 18.5% of real generation.*  
+  > *2. **The Systematic Over-Forecast**: The models had a positive bias of **+1,852 Megawatts**, over-forecasting 27 out of 31 days.*  
+  > *3. **The 90% Safe Buffer**: To be 90% confident you won't be caught short, you need a **4,275 Megawatt buffer**.*  
+  >  
+  > *The best part is that our tool splits that buffer into two parts: 1,852 Megawatts is predictable bias, and 2,423 Megawatts is real weather randomness.*  
+  >  
+  > *That means your desk doesn't need to buy expensive backup contracts for the whole amount—you simply adjust your bids down for the bias, and only hedge the weather risk. That's real money saved every single morning."*
 
 ---
 
-### [5:45 – 6:45] 2. The Analytical Engine: Point-in-Time Invariant Code
-- **Screen:** Switch editor to `backend/app/analytics/forecast_selection.py`.
-- **Mouse Action:** Highlight lines 105 to 135 (the `select_decision_forecast` function).
-- **Word-for-Word Script:**
-  > *"Let's look at the core causal logic in `backend/app/analytics/forecast_selection.py`.*
-  > 
-  > *The primary function is `select_decision_forecast`. It enforces the fundamental point-in-time invariant:*
-  > $$\text{publishTime} \le \text{cutoff\_time} \le \text{startTime}$$
-  > 
-  > *We achieve this without slow row-by-row loops. Using vectorised Pandas operations:*
-  > 1. *We calculate the target delivery date's cutoff timestamp.*
-  > 2. *We filter `publishTime <= cutoff_time`.*
-  > 3. *We sort by `[delivery_hour, publishTime]` and take `keep='last'`, which selects the freshest forecast available to the trader when the auction order was submitted.*
-  > 
-  > *Then, in `expand_to_half_hours`, we map hourly WINDFOR forecasts to half-hourly settlement periods using `dt.floor('h')`. In electricity markets, power is an instantaneous rate in MW, so an hourly forecast applies equally across both 30-minute intervals. This preserves 100% data coverage without synthesizing fake interpolation."*
+# PART 2: Tech Lead Review (Clear, Simple & Fast)
+**Your Goal:** Show the tech lead the architecture, clean code, speed, and tests without getting bogged down in complicated syntax.  
+**Length:** ~4 minutes.
 
 ---
 
-### [6:45 – 7:45] 3. Quantitative Risk & Buffer Decomposition Code
-- **Screen:** Switch editor to `backend/app/analytics/risk.py`.
-- **Mouse Action:** Highlight lines 40 to 80 (the `calculate_safe_wind` and `decompose_shortfall_buffer` functions).
-- **Word-for-Word Script:**
-  > *"Now let's examine `backend/app/analytics/risk.py`.*
-  > 
-  > *Here we implement the Safe Wind formula:*
-  > $$\text{Safe Wind} = \max(0, \text{Forecast} - \text{Buffer})$$
-  > *where shortfall is asymmetric:*
-  > $$\text{Shortfall} = \max(0, \text{Forecast} - \text{Actual})$$
-  > 
-  > *Look at `decompose_shortfall_buffer`: we mathematically split the total quantile buffer into two independent components: the systematic mean bias, and the residual stochastic quantile.*
-  > 
-  > *Furthermore, we support two empirical backtest modes: `in_sample` across the month, and a causal rolling `prior_days` backtest that uses only historical days up to $D-2$. At P90, our empirical coverage achieves **89.99%** in-sample and **89.65%** in prior-days backtesting, proving that the risk model holds out-of-sample."*
+### Step 1: Architecture & Why We Didn't Use a Database (4:15 – 5:15)
+- **Where to look:** Switch screen to VS Code and show `README.md` (the Mermaid diagram) or keep browser on the website.
+- **What to say:**
+  > *"Now let's switch gears and look at the engineering under the hood.*  
+  >  
+  > *First, **Deployment**: We use a clean split setup.*  
+  > *- The React frontend is deployed on **Vercel**.*  
+  > *- The FastAPI backend is running inside a Docker container on **Render**.*  
+  > *- Vercel automatically forwards all `/api` calls directly to Render behind the scenes, so the browser sees everything as one single website with zero CORS errors.*  
+  >  
+  > *Second, **Storage**: You might wonder why we didn't spin up a Postgres database.*  
+  > *- For January 2026, we have 18,104 forecast rows and 1,488 actual rows.*  
+  > *- We saved this data as compressed **Parquet files** in the repo, which takes only **122 Kilobytes** total.*  
+  > *- When the backend starts up, Python loads the entire dataset straight into memory in under **15 milliseconds**.*  
+  > *- Every API request responds in under 5 milliseconds with zero database network lag and zero maintenance."*
 
 ---
 
-### [7:45 – 8:40] 4. Reliability Engineering, Quality Gates & CI/CD
-- **Screen:** Switch to Terminal and run: `python scripts/verify_numbers.py`.
-- **Mouse Action:** Scroll through the 9 green `[PASS]` sections on screen.
-- **Word-for-Word Script:**
-  > *"Next, let's review our testing and software quality gates.*
-  > 
-  > *Notice this terminal execution: `python scripts/verify_numbers.py`. It runs across 9 rigorous sections: validating our primary KPIs against pure independent NumPy recalculations, verifying that the mean of the 31 daily biases equals the global monthly bias to within $10^{-6}$, and testing daylight saving time transitions across London time (including 23-hour spring-forward and 25-hour fall-back days).*
-  > 
-  > *In addition, our test suite includes:*
-  > - **112 backend tests** in Pytest, including 20 contract tests in `test_contract.py` that strictly lock every metric shown on the UI.
-  > - **38 frontend tests** in Vitest using Mock Service Worker (MSW), including automated `axe-core` accessibility audits guaranteeing WCAG 2.1 AA compliance.
-  > - **Automated Keep-Alive**: To prevent Render free tier containers from sleeping after 15 minutes, FastAPI runs a background asyncio worker pinging its own health endpoint every 14 minutes, paired with a React frontend heartbeat hook.*
-  > 
-  > *All of this is enforced automatically on every commit via GitHub Actions in `.github/workflows/ci.yml`."*
+### Step 2: The Core Python Logic (5:15 – 6:15)
+- **Where to look:** In VS Code, open [forecast_selection.py](file:///d:/UK%20weather%20forecast/backend/app/analytics/forecast_selection.py#L110).
+- **Actions on screen:**
+  1. Highlight lines 110–130 (`select_decision_forecast`).
+  2. Open [risk.py](file:///d:/UK%20weather%20forecast/backend/app/analytics/risk.py#L40) and highlight `decompose_shortfall_buffer`.
+- **What to say:**
+  > *"Let's look at the two most important Python files in `backend/app/analytics/`.*  
+  >  
+  > *In `forecast_selection.py`, the function `select_decision_forecast` enforces our main rule:*  
+  > *The forecast publication time must be before or equal to the decision cutoff time.*  
+  >  
+  > *We don't use slow `for` loops. We use fast, vectorised Pandas operations—filtering out late records and taking the latest valid forecast revision.*  
+  >  
+  > *Next, in `risk.py`, we calculate Safe Wind. We define shortfall as only when forecast is higher than actual generation. We calculate the 90th percentile shortfall and split it cleanly into the average bias and the residual risk."*
 
 ---
 
-### [8:40 – 9:30] 5. Architectural Trade-offs & Limitations
-- **Screen:** Switch editor to `README.md` Section 11 (Limitations & Next Steps).
-- **Word-for-Word Script:**
-  > *"To ensure a thorough review, let's discuss our explicit design trade-offs and limitations:*
-  > 
-  > 1. **Hourly vs Half-Hourly Granularity**: BMRS WINDFOR is published hourly while FUELHH is half-hourly. Assuming a flat hourly block rate ignores intra-hour ramp rates, but avoids fabricating non-existent data.
-  > 2. **National Fleet Aggregation**: Our pilot strictly uses national-level data. It does not model Scottish export transmission bottlenecks or BM curtailment under Bid-Offer Acceptances (BOAs).
-  > 3. **Next Technical Evolution**: Extending the cache beyond January 2026 across full multi-year seasons, and integrating half-hourly System Buy Price (SBP) feeds to compute real-time cash imbalance penalties alongside volumetric MW shortfalls."*
+### Step 3: Tests & Reliability (6:15 – 7:30)
+- **Where to look:** Switch to your terminal in VS Code.
+- **Actions on screen:**
+  1. Run this command: `python scripts/verify_numbers.py`.
+  2. Watch the 9 green `[PASS]` sections print out.
+- **What to say:**
+  > *"Quality and verification were top priorities.*  
+  >  
+  > *Notice this command: `python scripts/verify_numbers.py`. It runs 9 verification checks right against the real data:*  
+  > *- It re-calculates all KPIs using pure NumPy to prove the numbers are 100% correct.*  
+  > *- It confirms that the 31 daily averages equal the full-month average.*  
+  > *- And it tests Daylight Saving Time clock switches for London time—including 23-hour days in March and 25-hour days in October.*  
+  >  
+  > *Across the whole project, we have **112 automated backend tests** and **38 frontend tests**, all enforced automatically on every commit in GitHub Actions."*
 
 ---
 
-### [9:30 – 10:00] Wrap-Up & Submission
-- **Screen:** Return to browser showing `https://griddraft-one.vercel.app`.
-- **Word-for-Word Script:**
-  > *"In conclusion: the UK Wind Forecast Decision Tool is fully deployed, rigorously tested, and operational today. Both the Vercel frontend and Dockerised Render backend are live, open-source, and backed by a 100% green CI pipeline.*
-  > 
-  > *Thank you for your time, and I look forward to your questions."*
+### Step 4: Keep-Alive & Practical Trade-Offs (7:30 – 8:30)
+- **Where to look:** Switch back to the browser on `https://griddraft-one.vercel.app`.
+- **What to say:**
+  > *"Two quick practical engineering details:*  
+  >  
+  > *1. **Keep-Alive on Render**: Render's free tier spins down after 15 minutes of inactivity. To prevent cold starts, our FastAPI server runs a background task that pings its own health check every 14 minutes, and the React frontend also pings on page load.*  
+  >  
+  > *2. **Trade-offs**: Elexon publishes forecasts hourly, while actual generation is half-hourly. We map each hourly forecast flat across both 30-minute intervals. While this smooths out sub-hour wind changes, it keeps 100% of the data intact without making up synthetic numbers.*  
+  >  
+  > *The next feature on our roadmap is integrating live System Buy Prices so traders can see exact Pound Sterling penalty costs alongside Megawatt volumes."*
 
 ---
 
-## Quick Reference Summary Cards for Presentation
+### Step 5: Wrap Up (8:30 – 9:00)
+- **Where to look:** Move mouse back to the Decision view and show the live chart.
+- **What to say:**
+  > *"To wrap up:*  
+  > *- The website is live right now at `griddraft-one.vercel.app`.*  
+  > *- The backend is running on Render.*  
+  > *- All tests are passing, and all code is fully documented in the GitHub repository.*  
+  >  
+  > *Thank you very much, and I'd be happy to answer any questions!"*
 
-| Metric Name | Canonical Value | Where to Point on Screen |
-| :--- | :--- | :--- |
-| **January Coverage** | **1,488 / 1,488 intervals (100%)** | Top Metadata Header |
-| **Decision Cutoff MAE** | **2,145.2 MW (18.52% of mean)** | Accuracy Tab, Card 1 |
-| **Decision Cutoff RMSE** | **2,615.8 MW (14.7% of peak)** | Accuracy Tab, Card 2 |
-| **Systematic Bias** | **+1,851.9 MW (Over-forecast)** | Accuracy Tab, Card 3 |
-| **Positive Bias Days** | **27 of 31 days (87.1%)** | Bias Banner & Daily Chart |
-| **P90 Shortfall Buffer** | **4,274.9 MW** | Accuracy Tab, Card 4 |
-| **Bias / Residual Split** | **1,851.9 MW bias + 2,423.0 MW residual** | Card 4 breakdown text |
-| **Latest Pre-Delivery MAE** | **1,804.2 MW** | Accuracy Tab, Baseline toggle |
-| **Leakage Gap** | **341.0 MW (15.9%)** | Card 1 Leakage delta badge |
-| **Parquet Cache Size** | **122 KB total on disk** | Architecture Diagram / Terminal |
-| **Backend Test Count** | **112 passed** | Terminal / CI badge |
-| **Frontend Test Count** | **38 passed** | Terminal / CI badge |
+---
+
+## 📌 Numbers You Might Need to Glance At (Cheat-Sheet)
+
+- **Total intervals in January 2026**: 1,488 (100% complete)
+- **Decision MAE**: 2,145.2 MW
+- **Latest Pre-Delivery MAE**: 1,804.2 MW
+- **Leakage Difference**: 341.0 MW (15.9%)
+- **Systematic Bias**: +1,851.9 MW over-forecast (27 of 31 days)
+- **P90 Buffer**: 4,274.9 MW (1,852 MW bias + 2,423 MW weather noise)
+- **Parquet Cache Size**: 122 KB total on disk
+- **Tests**: 112 Backend passed, 38 Frontend passed
