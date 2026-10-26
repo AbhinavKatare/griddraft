@@ -16,7 +16,6 @@ Features:
 - Return values: typed Pydantic models
 """
 
-from datetime import date
 import logging
 from typing import Any, Dict, List, Optional, Sequence
 import numpy as np

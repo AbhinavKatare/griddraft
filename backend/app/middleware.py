@@ -4,7 +4,8 @@ import hashlib
 import json
 import logging
 import time
-from typing import Callable, Dict, Optional
+from collections.abc import Awaitable, Callable
+from typing import Dict
 import uuid
 
 from fastapi import Request, Response
@@ -57,7 +58,11 @@ metrics_tracker = MetricsTracker()
 class RequestIDAndLoggingMiddleware(BaseHTTPMiddleware):
     """Assigns X-Request-ID, tracks latency, and outputs structured JSON access logs."""
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], StarletteResponse]) -> StarletteResponse:
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[StarletteResponse]],
+    ) -> StarletteResponse:
         req_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
         start_time = time.perf_counter()
 
@@ -87,7 +92,11 @@ class RequestIDAndLoggingMiddleware(BaseHTTPMiddleware):
 class ETagAndCacheControlMiddleware(BaseHTTPMiddleware):
     """Generates standard ETag and Cache-Control headers, returning 304 Not Modified when matches."""
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], StarletteResponse]) -> StarletteResponse:
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[StarletteResponse]],
+    ) -> StarletteResponse:
         response = await call_next(request)
 
         # Apply caching only to successful GET responses
@@ -95,10 +104,19 @@ class ETagAndCacheControlMiddleware(BaseHTTPMiddleware):
             cache_control = "public, max-age=3600, stale-while-revalidate=86400"
 
             # Consume response body
-            body_chunks = []
-            async for chunk in response.body_iterator:
-                body_chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode("utf-8"))
-            body = b"".join(body_chunks)
+            response_body_iterator = getattr(response, "body_iterator", None)
+            if response_body_iterator is not None:
+                body_chunks = []
+                async for chunk in response_body_iterator:
+                    body_chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode("utf-8"))
+                body = b"".join(body_chunks)
+            else:
+                if isinstance(response.body, bytes):
+                    body = response.body
+                elif isinstance(response.body, str):
+                    body = response.body.encode("utf-8")
+                else:
+                    body = bytes(response.body)
 
             etag = f'"{hashlib.md5(body).hexdigest()}"'
 

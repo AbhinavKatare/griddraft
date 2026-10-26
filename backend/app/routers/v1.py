@@ -11,7 +11,7 @@ Provides production REST endpoints for:
 - /diagnostics/metrics: Server request latency and timing telemetry
 """
 
-from datetime import date, datetime
+from datetime import date
 import logging
 from typing import Any, Dict, List, Optional
 import numpy as np

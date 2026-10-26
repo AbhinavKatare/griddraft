@@ -1,6 +1,6 @@
 """RFC 7807 Problem Details representation and exception handlers."""
 
-from typing import Any, Dict, Optional
+from typing import Optional
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
