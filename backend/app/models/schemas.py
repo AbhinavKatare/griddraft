@@ -1,7 +1,6 @@
 """Pydantic models and schemas for request/response typing."""
 
-from datetime import date, datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 

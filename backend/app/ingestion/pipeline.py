@@ -1,6 +1,5 @@
 """Data ingestion pipeline to fetch, validate, deduplicate, and atomically write canonical Parquet datasets."""
 
-import asyncio
 from datetime import date, datetime, timedelta, timezone
 import json
 import logging
