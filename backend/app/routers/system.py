@@ -1,7 +1,6 @@
 """System router for health check, cache metadata and status reporting."""
 
 from fastapi import APIRouter, BackgroundTasks
-import pandas as pd
 
 from app.config import settings
 from app.models.schemas import SystemStatus

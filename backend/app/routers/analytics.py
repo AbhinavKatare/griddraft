@@ -11,7 +11,6 @@ from app.models.schemas import (
     HourlyProfilePoint,
     MonthlyKPIs,
 )
-from app.services.data_store import data_store
 from app.analytics.metrics import (
     calculate_daily_metrics,
     calculate_error_distribution,

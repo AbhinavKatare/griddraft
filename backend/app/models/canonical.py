@@ -4,9 +4,8 @@ All timestamps are strictly UTC-aware.
 All generation values are floats in Megawatts (MW), strictly non-negative.
 """
 
-from datetime import date, datetime, timezone
-from typing import Any, Dict, List, Optional
-import numpy as np
+from datetime import datetime, timezone
+from typing import Any, Dict, List
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator
 import pyarrow as pa

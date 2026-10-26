@@ -1,8 +1,7 @@
 """Forecast router providing point-in-time day-ahead forecast views."""
 
-from datetime import date, datetime
+from datetime import datetime
 import logging
-from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 import numpy as np
 import pandas as pd

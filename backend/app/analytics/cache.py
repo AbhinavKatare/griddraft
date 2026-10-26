@@ -1,7 +1,6 @@
 """In-memory thread-safe LRU caching for expensive point-in-time alignments and metrics."""
 
 from functools import lru_cache
-from typing import Tuple
 import pandas as pd
 
 from app.analytics.forecast_selection import (

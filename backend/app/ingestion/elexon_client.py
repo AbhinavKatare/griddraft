@@ -10,7 +10,7 @@ Features:
 """
 
 import asyncio
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 import logging
 import random
 from typing import Any, Dict, List, Optional, Tuple
