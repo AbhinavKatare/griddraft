@@ -2,8 +2,12 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/health",
+      "destination": "https://<your-render-backend>.onrender.com/health"
+    },
+    {
       "source": "/api/(.*)",
-      "destination": "https://your-backend-app.herokuapp.com/api/$1"
+      "destination": "https://<your-render-backend>.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",

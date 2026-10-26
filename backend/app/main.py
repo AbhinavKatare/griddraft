@@ -1,10 +1,12 @@
 """FastAPI application factory and production server configuration."""
 
+import asyncio
 from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
 from typing import AsyncGenerator, Optional
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,9 +39,28 @@ logging.basicConfig(
 logger = logging.getLogger("wind_forecast_app")
 
 
+async def keep_alive_worker(app_url: str, interval_seconds: int = 840) -> None:
+    """Periodically ping public URL every 14 minutes (840s) to prevent container sleep on free hosts (Render)."""
+    logger.info("Starting keep-alive background worker targeting %s every %ds...", app_url, interval_seconds)
+    client = httpx.AsyncClient(timeout=15.0)
+    try:
+        while True:
+            await asyncio.sleep(interval_seconds)
+            try:
+                target = f"{app_url.rstrip('/')}/health"
+                resp = await client.get(target)
+                logger.info("Keep-alive ping to %s returned %s", target, resp.status_code)
+            except Exception as err:
+                logger.warning("Keep-alive ping to %s failed: %s", app_url, err)
+    except asyncio.CancelledError:
+        logger.info("Keep-alive background worker cancelled cleanly.")
+    finally:
+        await client.aclose()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Lifespan event handler for startup cache loading and shutdown."""
+    """Lifespan event handler for startup cache loading, keep-alive worker, and shutdown."""
     logger.info("Initializing %s v%s...", settings.app_name, settings.app_version)
 
     # Check if Parquet cache exists; if not, fetch once from Elexon BMRS
@@ -53,7 +74,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Load cache into memory once
     data_store.load_data()
     logger.info("Application ready to serve requests. Cache loaded: %s", data_store.is_cached())
+
+    # Start 14-minute keep-alive worker if configured or running on Render
+    keep_alive_task = None
+    target_url = (
+        settings.keep_alive_url
+        or os.environ.get("RENDER_EXTERNAL_URL")
+        or os.environ.get("KEEP_ALIVE_URL")
+    )
+    if settings.enable_keep_alive and target_url:
+        interval_secs = max(60, settings.keep_alive_interval_minutes * 60)
+        keep_alive_task = asyncio.create_task(keep_alive_worker(target_url, interval_secs))
+    else:
+        logger.info("Keep-alive worker inactive (no RENDER_EXTERNAL_URL or KEEP_ALIVE_URL provided).")
+
     yield
+
+    if keep_alive_task:
+        keep_alive_task.cancel()
+        try:
+            await keep_alive_task
+        except asyncio.CancelledError:
+            pass
+
     logger.info("Shutting down application.")
 
 
@@ -132,6 +175,9 @@ def create_app(app_settings: Optional[Settings] = None) -> FastAPI:
     )
     async def health() -> HealthResponse:
         """Health check returning system status and memory cache readiness."""
+        # Ensure lazy load if lifespan did not fire in serverless environments
+        if not data_store.is_cached():
+            data_store.load_data()
         return HealthResponse(
             status="healthy",
             version=cfg.app_version,

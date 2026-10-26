@@ -5,6 +5,7 @@ import { ControlBar } from './components/ControlBar.tsx';
 import { HeroChartSkeleton } from './components/ui/LoadingSkeleton.tsx';
 import { ToastContainer } from './components/ui/ToastContainer.tsx';
 import { useUrlState } from './hooks/useUrlState.ts';
+import { useKeepAlive } from './hooks/useKeepAlive.ts';
 import { viewTransitionVariants } from './design/motion.ts';
 import type { ToastMessage, ViewTab } from './types.ts';
 
@@ -25,6 +26,9 @@ export function App() {
   const { state, updateState, stepDeliveryDay } = useUrlState();
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // 14-minute keep-alive heartbeat to prevent backend idle sleeping on free tiers
+  useKeepAlive(14);
 
   // Direction tracking for view transition (-1: left, 1: right)
   const [direction, setDirection] = useState<number>(1);

@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -37,6 +38,11 @@ class Settings(BaseSettings):
     # CORS Settings
     cors_origins: list[str] = ["*"]
 
+    # Render Anti-Sleep Keep-Alive
+    enable_keep_alive: bool = True
+    keep_alive_interval_minutes: int = 14
+    keep_alive_url: Optional[str] = None
+
     # Default Day-Ahead Trading Parameters
     default_decision_time: str = "09:00"  # UK time (= GMT in January) on D-1
     target_year: int = 2026
@@ -50,4 +56,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-settings.cache_dir.mkdir(parents=True, exist_ok=True)
+try:
+    settings.cache_dir.mkdir(parents=True, exist_ok=True)
+except OSError:
+    # Read-only filesystem in serverless environments (e.g. Vercel)
+    pass
