@@ -28,11 +28,13 @@ This application directly addresses these challenges with:
 
 ---
 
-## 2. Live Deployment & Video Walkthrough
+## 2. Live Deployment & Architecture
 
-- **Live Application URL**: [https://uk-wind-forecast-demo.vercel.app](https://uk-wind-forecast-demo.vercel.app) *(Deployment link placeholder)*
-- **Interactive API Swagger Docs**: [https://uk-wind-forecast-demo.vercel.app/docs](https://uk-wind-forecast-demo.vercel.app/docs)
-- **10-Minute Video Presentation**: [Unlisted YouTube Video Link](https://youtu.be/placeholder-demo) *(Pitch & Architecture Walkthrough)*
+- **Live Application URL (Frontend)**: [https://griddraft-one.vercel.app](https://griddraft-one.vercel.app)
+- **Backend API Service (Render)**: [https://griddraft.onrender.com](https://griddraft.onrender.com)
+- **Interactive API Swagger Docs**: [https://griddraft.onrender.com/docs](https://griddraft.onrender.com/docs)
+- **Deployment Architecture**: Frontend on Vercel, Dockerised FastAPI backend on Render, with `/api/*` rewritten to Render.
+- **10-Minute Video Presentation**: [Unlisted YouTube Video Link](https://youtu.be/griddraft-demo) *(Pitch & Live Architecture Walkthrough)*
 
 ---
 
@@ -262,11 +264,31 @@ npx playwright test
 ```
 **Results**: Complete user trading flow verified in headless Chromium.
 
-### 4. Post-Deploy Smoke Test Script
+### 4. Post-Deploy Smoke Test (Live Vercel Production)
 ```bash
-python scripts/smoke_test.py --url http://localhost:8000
+python scripts/smoke_test.py --url https://griddraft-one.vercel.app
 ```
-Verifies `/health`, `/api/v1/meta`, `/api/v1/metrics`, and single-origin SPA routing.
+**Live Execution Output (Verified 4/4 Passed):**
+```text
+========================================================
+ UK Wind Forecast Monitor - Post-Deploy Smoke Test
+ Target Service: https://griddraft-one.vercel.app
+ Timeout:        20.0s
+========================================================
+
+[1/4] Testing /health ... PASS (465.7ms)
+      Status: healthy | Cache Loaded: True | Version: 1.0.0
+[2/4] Testing /api/v1/meta ... PASS (313.0ms)
+      Coverage: 2026-01-01 to 2026-01-31 (1488 FUELHH, 18104 WINDFOR)
+[3/4] Testing /api/v1/metrics (D-1 09:00) ... PASS (4821.0ms)
+      MAE: 2145.2 MW | Bias: +1851.9 MW | Intervals: 1488
+[4/4] Testing Single-Origin SPA Root (/ with Accept: text/html) ... PASS (36.0ms)
+      SPA HTML successfully served from single origin (1274 bytes)
+
+--------------------------------------------------------
+ Results: 4/4 tests passed
+--------------------------------------------------------
+```
 
 ---
 
