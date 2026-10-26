@@ -3,11 +3,11 @@
   "rewrites": [
     {
       "source": "/health",
-      "destination": "https://<your-render-backend>.onrender.com/health"
+      "destination": "https://griddraft.onrender.com/health"
     },
     {
       "source": "/api/(.*)",
-      "destination": "https://<your-render-backend>.onrender.com/api/$1"
+      "destination": "https://griddraft.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",

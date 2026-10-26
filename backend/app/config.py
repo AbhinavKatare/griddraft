@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     # Render Anti-Sleep Keep-Alive
     enable_keep_alive: bool = True
     keep_alive_interval_minutes: int = 14
-    keep_alive_url: Optional[str] = None
+    keep_alive_url: Optional[str] = "https://griddraft.onrender.com"
 
     # Default Day-Ahead Trading Parameters
     default_decision_time: str = "09:00"  # UK time (= GMT in January) on D-1
